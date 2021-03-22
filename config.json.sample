@@ -1,3 +1,10 @@
 {
-    "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "IRCServer": "chat.freenode.net",
+    "IRCPort": "6667",
+    "IRCNick": "changeme",
+    "IRCPass": "changeme",
+    "IRCName": "Full Name",
+    "IRCChannel": "#floating-eye-bot",
+    "IRCBot": "Beholder"
 }
