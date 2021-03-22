@@ -15,6 +15,6 @@ func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	}
 }
 
-func (a *application) startHandler(m *tbot.Message) {
-	a.client.SendMessage(m.Chat.ID, "This is a bot to query IRC knowlege base bot for NetHack.")
+func (a *Application) startHandler(m *tbot.Message) {
+	a.TgClient.SendMessage(m.Chat.ID, "This is a bot to query IRC knowlege base bot for NetHack.")
 }

@@ -1,10 +1,14 @@
 {
-    "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    "IRCServer": "chat.freenode.net",
-    "IRCPort": "6667",
-    "IRCNick": "changeme",
-    "IRCPass": "changeme",
-    "IRCName": "Full Name",
-    "IRCChannel": "#floating-eye-bot",
-    "IRCBot": "Beholder"
+    "tg": {
+        "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"   
+    }, 
+    "irc": {
+        "Server": "chat.freenode.net",
+        "Port": "6667",
+        "Nick": "changeme",
+        "Pass": "changeme",
+        "Name": "Full Name",
+        "Channel": "#bot-test-chan",
+        "Bot": "Beholder"   
+    }
 }
