@@ -5,7 +5,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
@@ -66,6 +68,8 @@ func main() {
 	tgBot.Use(stat)
 	// Set message handlers
 	tgBot.HandleMessage("/start", app.startHandler)
+	tgBot.HandleMessage("/test\\s+\\S", app.testHandler)
+
 	// Start the Telegram bot
 	wg.Add(1)
 	go func() {
@@ -75,36 +79,23 @@ func main() {
 		log.Println("Telegram disconnected!")
 	}()
 
-	// Connecting to IRC
+	// Initialize IRC config
+	config := irc.ClientConfig{
+		Nick:    app.Conf.Irc.Nick,
+		Pass:    app.Conf.Irc.Pass,
+		User:    app.Conf.Irc.Nick,
+		Name:    app.Conf.Irc.Name,
+		Handler: ircHandlerFunc,
+	}
+
+	// Connect to IRC server
 	conn, err := net.Dial("tcp", app.Conf.Irc.Server+":"+app.Conf.Irc.Port)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer conn.Close()
 
-	config := irc.ClientConfig{
-		Nick: app.Conf.Irc.Nick,
-		Pass: app.Conf.Irc.Pass,
-		User: app.Conf.Irc.Nick,
-		Name: app.Conf.Irc.Name,
-		Handler: irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
-			if m.Command == "001" {
-				// 001 is a welcome event, so we join channels there
-				c.Write("JOIN " + app.Conf.Irc.Channel)
-			} else if m.Command == "PRIVMSG" && c.FromChannel(m) {
-				// Create a handler on all messages.
-				c.WriteMessage(&irc.Message{
-					Command: "PRIVMSG",
-					Params: []string{
-						m.Params[0],
-						m.Trailing(),
-					},
-				})
-			}
-		}),
-	}
-
-	// Create the client
+	// Create and run IRC client
 	wg.Add(1)
 	go func() {
 		app.IrcClient = irc.NewClient(conn, config)
@@ -113,6 +104,19 @@ func main() {
 		wg.Done()
 		log.Println("IRC disconnected!")
 	}()
+
+	// Send QUIT on SIGTERM
+	sig := make(chan os.Signal)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sig
+		log.Println("Shutting down…")
+		err := app.IrcClient.Write("QUIT")
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
 	// Wait for goroutines to finish
 	wg.Wait()
 }
