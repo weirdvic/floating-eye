@@ -1,0 +1,12 @@
+Floating-Eye bot
+
+* Описание
+Простой бот-адаптер для передачи сообщений из Telegram в IRC к боту и передачи ответа обратно в Telegram. Изначально разрабатывался для использования бота Pinoclone в IRC Freenode, но через изменение настроек может быть адаптирован для другой IRC сети и других ботов.
+* Установка
+Склонировать репозиторий:
+~git clone https://github.com/weirdvic/floating-eye.git~
+Собрать бинарник:
+~cd floating-eye && go build~
+Отредактировать файл config.json
+Запустить бот:
+~./floating-eye~
