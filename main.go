@@ -24,6 +24,11 @@ type AppConfig struct {
 	Irc IrcConfig
 }
 
+type BotQuery struct {
+	BotNick string
+	Query   *tbot.Message
+}
+
 type TgConfig struct {
 	Token string
 }
@@ -38,8 +43,10 @@ type IrcConfig struct {
 }
 
 var (
-	app     Application
-	workers sync.WaitGroup
+	app             Application
+	workers         sync.WaitGroup
+	inboxChannel    = make(chan BotQuery, 100)
+	responseChannel = make(chan string, 100)
 )
 
 func init() {
@@ -68,6 +75,10 @@ func init() {
 	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
 	// Set main command handler
 	tgBot.HandleMessage(commandRegexp, app.commandHandler)
+	// Set !lastgame command handler
+	tgBot.HandleMessage("^!(scores|sb|players|who|variant)\\s*$", app.beholderHandler)
+	tgBot.HandleMessage("^!(whereis|streak|role|race)\\s*\\w*\\s*$", app.beholderHandler)
+	tgBot.HandleMessage("^!(lastgame|asc|lastasc)\\s*\\w*\\s*\\w*$", app.beholderHandler)
 
 	// Start the Telegram bot
 	go func() {
@@ -99,6 +110,16 @@ func init() {
 	}()
 }
 
+func inboxWorker(c <-chan BotQuery, a *Application) {
+	for q := range c {
+		a.IrcClient.WriteMessage(&irc.Message{
+			Command: "PRIVMSG",
+			Params:  []string{q.BotNick, q.Query.Text}})
+		botResponse := <-responseChannel
+		a.TgClient.SendMessage(q.Query.Chat.ID, botResponse)
+	}
+}
+
 func main() {
 	// Run IRC client
 	go func() {
@@ -110,20 +131,6 @@ func main() {
 	go func() {
 		log.Println("Starting inbox worker…")
 		inboxWorker(inboxChannel, &app)
-		workers.Done()
-	}()
-
-	workers.Add(1)
-	go func() {
-		log.Println("Starting query worker…")
-		queryWorker(queryChannel, &app)
-		workers.Done()
-	}()
-
-	workers.Add(1)
-	go func() {
-		log.Println("Starting outbox worker…")
-		outboxWorker(outboxChannel, &app)
 		workers.Done()
 	}()
 
