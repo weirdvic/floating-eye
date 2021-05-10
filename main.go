@@ -66,8 +66,7 @@ func init() {
 
 	// Set start or help message handler
 	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
-	// Set help message handler
-	// Set command handler
+	// Set main command handler
 	tgBot.HandleMessage(commandRegexp, app.commandHandler)
 
 	// Start the Telegram bot
