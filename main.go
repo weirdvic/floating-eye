@@ -29,18 +29,17 @@ type TgConfig struct {
 }
 
 type IrcConfig struct {
-	Server  string
-	Port    string
-	Nick    string
-	Pass    string
-	Name    string
-	Channel string
-	Bot     string
+	Server string
+	Port   string
+	Nick   string
+	Pass   string
+	Name   string
+	Bot    string
 }
 
 var (
-	app Application
-	wg  sync.WaitGroup
+	app     Application
+	workers sync.WaitGroup
 )
 
 func init() {
@@ -57,26 +56,24 @@ func init() {
 	} else {
 		log.Printf("Config successfully loaded.")
 	}
-}
-
-func main() {
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Conf.Tg.Token)
 	log.Printf("Created new bot with token: %s", app.Conf.Tg.Token)
 	app.TgClient = tgBot.Client()
+
 	// Set middleware
 	tgBot.Use(stat)
-	// Set message handlers
-	tgBot.HandleMessage("/start", app.startHandler)
-	tgBot.HandleMessage("/test\\s+\\S", app.testHandler)
+
+	// Set start or help message handler
+	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
+	// Set help message handler
+	// Set command handler
+	tgBot.HandleMessage(commandRegexp, app.commandHandler)
 
 	// Start the Telegram bot
-	wg.Add(1)
 	go func() {
 		log.Println("Connecting to Telegram…")
 		log.Fatalln(tgBot.Start())
-		wg.Done()
-		log.Println("Telegram disconnected!")
 	}()
 
 	// Initialize IRC config
@@ -93,30 +90,43 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer conn.Close()
+	app.IrcClient = irc.NewClient(conn, config)
 
-	// Create and run IRC client
-	wg.Add(1)
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		app.IrcClient = irc.NewClient(conn, config)
+		<-c
+		app.IrcClient.Write("QUIT")
+	}()
+}
+
+func main() {
+	// Run IRC client
+	go func() {
 		log.Println("Connecting to IRC…")
 		log.Fatalln(app.IrcClient.Run())
-		wg.Done()
-		log.Println("IRC disconnected!")
 	}()
 
-	// Send QUIT on SIGTERM
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	workers.Add(1)
 	go func() {
-		<-sig
-		log.Println("Shutting down…")
-		err := app.IrcClient.Write("QUIT")
-		if err != nil {
-			log.Fatalln(err)
-		}
+		log.Println("Starting inbox worker…")
+		inboxWorker(inboxChannel, &app)
+		workers.Done()
 	}()
 
-	// Wait for goroutines to finish
-	wg.Wait()
+	workers.Add(1)
+	go func() {
+		log.Println("Starting query worker…")
+		queryWorker(queryChannel, &app)
+		workers.Done()
+	}()
+
+	workers.Add(1)
+	go func() {
+		log.Println("Starting outbox worker…")
+		outboxWorker(outboxChannel, &app)
+		workers.Done()
+	}()
+
+	workers.Wait()
 }
