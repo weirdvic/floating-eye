@@ -10,7 +10,7 @@ import (
 
 // Regexp defining commands that could be sent to IRC bot
 // const commandRegexp string = "^!(help|commands|ping|time|tell|hello|lastgame|asc|lastasc|scores|setmintc|whereis|players|who|streak|role|race|variant|rng|pom|(\\d{1,2}d\\d{1,4}))\\s*"
-const commandRegexp string = "^@(\\?|v\\?|V\\?|d\\?|e\\?|g\\?|b\\?|l(\\?|e\\?|t\\?)|s\\?|u(\\?|\\+\\?))\\s+.+"
+const commandRegexp string = "^@(\\?|v\\?|V\\?|d\\?|e\\?|g\\?|b\\?|l(\\?|e\\?|t\\?)|s\\?|u(\\?|\\+\\?))\\s*.+"
 
 var (
 	inboxChannel    = make(chan *tbot.Message, 100)
