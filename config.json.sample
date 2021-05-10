@@ -8,7 +8,6 @@
         "Nick": "changeme",
         "Pass": "changeme",
         "Name": "Full Name",
-        "Channel": "#bot-test-chan",
-        "Bot": "Beholder"   
+        "Bot": "changeme"   
     }
 }
