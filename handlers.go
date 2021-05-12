@@ -72,8 +72,8 @@ slth:  slashthem slth
 `)
 }
 
-func (a *Application) commandHandler(m *tbot.Message) {
-	inboxChannel <- BotQuery{app.Conf.Irc.Bot, m}
+func (a *Application) pinobotHandler(m *tbot.Message) {
+	inboxChannel <- BotQuery{"Pinoclone", m}
 }
 
 func (a *Application) beholderHandler(m *tbot.Message) {
@@ -92,8 +92,8 @@ var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 	// Handle PING command
 	case m.Command == "PING":
 		c.Write("PONG")
-	// Handle private messages
-	case m.Command == "PRIVMSG" && (m.Name == app.Conf.Irc.Bot || m.Name == "Beholder"):
+	// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
+	case m.Command == "PRIVMSG" && goodSender(m.Name):
 		responseChannel <- m.Trailing()
 	default:
 		log.Println(m.Command, m.Params)
