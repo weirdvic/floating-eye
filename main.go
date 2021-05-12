@@ -34,12 +34,19 @@ type IrcConfig struct {
 	Nick   string
 	Pass   string
 	Name   string
-	Bot    string
+	Bots   []string
+}
+
+type BotQuery struct {
+	BotNick string
+	Query   *tbot.Message
 }
 
 var (
-	app     Application
-	workers sync.WaitGroup
+	app             Application
+	workers         sync.WaitGroup
+	queryChannel    = make(chan BotQuery, 100)
+	responseChannel = make(chan string, 100)
 )
 
 func init() {
@@ -54,7 +61,9 @@ func init() {
 	if err != nil {
 		log.Fatalln(err)
 	} else {
-		log.Printf("Config successfully loaded.")
+		log.Println("Config successfully loaded.")
+		log.Print("Available bots are: ")
+		log.Println(app.Conf.Irc.Bots)
 	}
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Conf.Tg.Token)
@@ -67,7 +76,11 @@ func init() {
 	// Set start or help message handler
 	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
 	// Set main command handler
-	tgBot.HandleMessage(commandRegexp, app.commandHandler)
+	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
+	// Set !lastgame command handler
+	tgBot.HandleMessage("^!(scores|sb|players|who|variant)\\s*$", app.beholderHandler)
+	tgBot.HandleMessage("^!(whereis|streak|role|race)\\s*\\w*\\s*$", app.beholderHandler)
+	tgBot.HandleMessage("^!(lastgame|asc|lastasc)\\s*\\w*\\s*\\w*$", app.beholderHandler)
 
 	// Start the Telegram bot
 	go func() {
@@ -99,6 +112,33 @@ func init() {
 	}()
 }
 
+// askBot is a simple wrapper to send message to the IRC bot
+func askBot(nick, text string) {
+	app.IrcClient.WriteMessage(&irc.Message{
+		Command: "PRIVMSG",
+		Params:  []string{nick, text}})
+}
+
+// queryWorker reads from inboxChannel, passes the query text to IRC,
+// awaits for response from bot and sends the response text back to Telegram
+func queryWorker(c <-chan BotQuery) {
+	for q := range c {
+		askBot(q.BotNick, q.Query.Text)
+		botResponse := <-responseChannel
+		app.TgClient.SendMessage(q.Query.Chat.ID, botResponse)
+	}
+}
+
+// goodSender checks if sender is in allowed senders list
+func goodSender(sender string) bool {
+	for _, s := range app.Conf.Irc.Bots {
+		if sender == s {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 	// Run IRC client
 	go func() {
@@ -106,24 +146,11 @@ func main() {
 		log.Fatalln(app.IrcClient.Run())
 	}()
 
+	// Run main worker and wait
 	workers.Add(1)
 	go func() {
 		log.Println("Starting inbox worker…")
-		inboxWorker(inboxChannel, &app)
-		workers.Done()
-	}()
-
-	workers.Add(1)
-	go func() {
-		log.Println("Starting query worker…")
-		queryWorker(queryChannel, &app)
-		workers.Done()
-	}()
-
-	workers.Add(1)
-	go func() {
-		log.Println("Starting outbox worker…")
-		outboxWorker(outboxChannel, &app)
+		queryWorker(queryChannel)
 		workers.Done()
 	}()
 

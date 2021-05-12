@@ -8,6 +8,6 @@
         "Nick": "changeme",
         "Pass": "changeme",
         "Name": "Full Name",
-        "Bot": "changeme"   
+        "Bots": ["firstbot", "secondbot", "thirdbot"]
     }
 }
