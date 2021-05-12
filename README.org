@@ -11,7 +11,7 @@
 
 ~cd floating-eye && go build~
 
-Отредактировать файл ~config.json.sample~, заполнив его собственными значениями:
+Отредактировать файл ~config.json.sample~, заполнив его собственными значениями и сохранить в ~config.json~:
 
 ~Token~ — токен вашего Telegram бота
 
