@@ -73,11 +73,16 @@ slth:  slashthem slth
 }
 
 func (a *Application) pinobotHandler(m *tbot.Message) {
-	inboxChannel <- BotQuery{"Pinoclone", m}
+	queryChannel <- BotQuery{"Pinoclone", m}
 }
 
 func (a *Application) beholderHandler(m *tbot.Message) {
-	inboxChannel <- BotQuery{"Beholder", m}
+	queryChannel <- BotQuery{"Beholder", m}
+}
+
+func (a *Application) pomHandler(m *tbot.Message) {
+	filename, caption := scrapePOM()
+	app.TgClient.SendPhotoFile(m.Chat.ID, filename, tbot.OptCaption(caption))
 }
 
 var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
