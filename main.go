@@ -136,6 +136,13 @@ func goodSender(sender string) bool {
 	return false
 }
 
+// checkError is a simple wrapper for "if err != nil" construction
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	// Run IRC client
 	go func() {

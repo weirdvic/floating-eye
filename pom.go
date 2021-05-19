@@ -69,10 +69,3 @@ func scrapePOM() (pomFileName, pomText string) {
 	// In case file already exist return filename and description string
 	return pomFileName, pomText
 }
-
-// checkError is a simple wrapper for "if err != nil" construction
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
