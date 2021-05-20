@@ -48,6 +48,7 @@ Other commands are:
 !race [variant] – as above, for race.
 !scores or !sb – provides you with a link to the Hardfought scoreboard of all variants hosted.
 !players or !who – displays a list of all players currently online and which variant they are playing.
+!pom - display current phase of moon.
 
 Where commands take the name of a variant, the following aliases are accepted:
 nh343:  nh343 nethack 343
@@ -81,8 +82,23 @@ func (a *Application) beholderHandler(m *tbot.Message) {
 }
 
 func (a *Application) pomHandler(m *tbot.Message) {
-	filename, caption := scrapePOM()
-	app.TgClient.SendPhotoFile(m.Chat.ID, filename, tbot.OptCaption(caption))
+	// Save time of the request
+	updateTime := time.Now()
+	// If pom.jpg wasn't updated in an hour do an update
+	if pom.Updated.Hour()-updateTime.Hour() != 0 {
+		err := updatePomImage(pom.ImageArgs)
+		switch {
+		// in case there was an error running xplanets send this error as a message
+		case err != nil:
+			pom.Text = err.Error()
+		// otherwise update pom.Text and save the update timestamp
+		default:
+			pom.Text = getPomText()
+			pom.Updated = updateTime
+		}
+	}
+	// Send the image back to Telegram with pom.Text as a caption
+	app.TgClient.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(pom.Text))
 }
 
 var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {

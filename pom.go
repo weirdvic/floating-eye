@@ -1,71 +1,141 @@
 package main
 
 import (
-	"bytes"
-	"crypto/md5"
-	"encoding/hex"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-
-	"github.com/PuerkitoBio/goquery"
+	"fmt"
+	"os/exec"
+	"time"
 )
 
-// scrapePOM gets current Lunar phase and corresponding image from https://alt.org/nethack site
-func scrapePOM() (pomFileName, pomText string) {
-	var (
-		fileHandler *os.File
-		pomTextURL  = "https://alt.org/nethack/"
-		pomImageURL = "https://alt.org/nethack/moon/pom.jpg"
-	)
-	// Getting Lunar phase description text
-	res, err := http.Get(pomTextURL)
-	checkError(err)
-	defer res.Body.Close()
+// pomRequest stores last pom update time, pom description text and xplanet arguments
+type pomRequest struct {
+	Updated   time.Time
+	Text      string
+	ImageArgs []string
+}
 
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	checkError(err)
-
-	doc.Find("p").Each(func(i int, s *goquery.Selection) {
-		// Phase of moon is stored in second <p></p> section so we use 1 as index and save section's tex to the variable
-		if i == 1 {
-			pomText = s.Text()
-		}
-	})
-
-	// Getting Lunar phase image
-	res, err = http.Get(pomImageURL)
-	checkError(err)
-	defer res.Body.Close()
-	// We are saving response body to pomImage to be able to read it several times
-	// res.Body not used after this line
-	pomImage, err := ioutil.ReadAll(res.Body)
-
-	// First of all we're going to calculate md5 hash of a file to use it as a filename
-	hash := md5.New()
-	_, err = io.Copy(hash, ioutil.NopCloser(bytes.NewReader(pomImage)))
-	checkError(err)
-	md5sum := hex.EncodeToString(hash.Sum(nil))
-	// filename is pom/md5sum.jpg
-	pomFileName = "pom/" + md5sum + ".jpg"
-
-	// Let's check if file with that name already exists
-	_, err = os.Stat(pomFileName)
-	// Create new file if pomFileName not found
-	if err != nil {
-		log.Println("File not found: ", pomFileName)
-		fileHandler, err = os.Create(pomFileName)
-		checkError(err)
-		defer fileHandler.Close()
-		// Copying response body bytes to file
-		_, err = io.Copy(fileHandler, ioutil.NopCloser(bytes.NewReader(pomImage)))
-		checkError(err)
-		log.Println("Image was saved in: ", pomFileName)
-		// Return the filename of image with current Lunar phase and description string
-		return pomFileName, pomText
+// getPhase is a rewrite of the same function from https://alt.org/nethack/moon/pom.pl
+// which in turn is a rewrite of NetHack's phase_of_the_moon function
+func getPhase(diy, year int) int {
+	goldn := (year % 19) + 1
+	epact := (11*goldn + 18) % 30
+	if (epact == 25 && goldn > 11) || epact == 24 {
+		epact++
 	}
-	// In case file already exist return filename and description string
-	return pomFileName, pomText
+	return (((((diy + epact) * 6) + 11) % 177) / 22) & 7
+}
+
+// isLeapYear returns 1 if it is a leap year and 0 if it is not
+func isLeapYear(year int) int {
+	leapFlag := 0
+	if year%4 == 0 {
+		if year%100 == 0 {
+			if year%400 == 0 {
+				leapFlag = 1
+			} else {
+				leapFlag = 1
+			}
+		} else {
+			leapFlag = 1
+		}
+	} else {
+		leapFlag = 1
+	}
+	return leapFlag
+}
+
+// getPomText is used to construct string describing current moon phase
+// example: The Moon is Waxing Gibbous (60% of Full) Full moon in NetHack in 5 days.
+func getPomText() (pomText string) {
+	var (
+		inPhase, days int
+	)
+	// first part of the message is the result of 'pom' command from bsdgames package
+	pomOut, err := exec.Command("pom").Output()
+	if err != nil {
+		pomText = err.Error()
+		return pomText
+	}
+	// appending first part of the message
+	pomText = string(pomOut)
+
+	localtime := time.Now()
+	hour := localtime.Hour()
+	year := localtime.Year()
+	diy := localtime.YearDay()
+
+	curPhase := getPhase(diy, year)
+
+	if curPhase == 0 || curPhase == 4 {
+		inPhase = 1
+	}
+
+	leapYear := isLeapYear(year)
+
+	nextDiy, nextYear, nextPhase, nextInPhase := diy, year, curPhase, inPhase
+
+	// adaptation of do…while cycle from the original script
+	for {
+		nextDiy++
+		days++
+		if nextDiy-leapYear == 365 {
+			nextDiy = 0
+			nextYear++
+		}
+		nextPhase = getPhase(nextDiy, nextYear)
+		if nextPhase == 0 || nextPhase == 4 {
+			nextInPhase = 1
+		} else {
+			nextInPhase = 0
+		}
+		if inPhase != nextInPhase {
+			break
+		}
+	}
+
+	// completing the message string with NetHack related info
+	switch {
+	case curPhase == 0:
+		pomText += "New moon in NetHack "
+		if days == 1 {
+			pomText += "until midnight, "
+		} else {
+			pomText += fmt.Sprintf("for the next %d days.", days)
+		}
+	case curPhase == 4:
+		pomText += "Full moon in NetHack "
+		if days == 1 {
+			pomText += "until midnight, "
+		} else {
+			pomText += fmt.Sprintf("for the next %d days.", days)
+		}
+	case curPhase < 4:
+		pomText += "Full moon in NetHack "
+		if days == 1 {
+			pomText += "at midnight, "
+		} else {
+			pomText += fmt.Sprintf("in %d days.", days)
+		}
+	default:
+		pomText += "New moon in NetHack "
+		if days == 1 {
+			pomText += "at midnight, "
+		} else {
+			pomText += fmt.Sprintf("in %d days.", days)
+		}
+	}
+	// add hour(s) to the message
+	if days == 1 {
+		pomText += fmt.Sprintf("%d hour", 24-hour)
+		if 24-hour != 1 {
+			pomText += "s"
+		}
+		pomText += " from now."
+	}
+	return pomText
+}
+
+// updatePomImage runs xplanet command with provided arguments and returns an error if there any
+func updatePomImage(args []string) error {
+	_, e := exec.Command("xplanet", args...).Output()
+	return e
 }

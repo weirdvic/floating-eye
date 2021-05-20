@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
@@ -47,6 +48,7 @@ var (
 	workers         sync.WaitGroup
 	queryChannel    = make(chan BotQuery, 100)
 	responseChannel = make(chan string, 100)
+	pom             pomRequest
 )
 
 func init() {
@@ -60,6 +62,13 @@ func init() {
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(app.Conf.Irc.Bots)
+
+	// Initialize Phase of Moon structure and update pom.jpg
+	pom.Updated = time.Now()
+	pom.Text = getPomText()
+	pom.ImageArgs = []string{"-origin earth", "-body moon", "-num_times 1", "-output pom.jpg", "-geometry 300x300"}
+	err = updatePomImage(pom.ImageArgs)
+	checkError(err)
 
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Conf.Tg.Token)
