@@ -66,7 +66,7 @@ func init() {
 	// Initialize Phase of Moon structure and update pom.jpg
 	pom.Updated = time.Now()
 	pom.Text = getPomText()
-	pom.ImageArgs = []string{"-origin earth", "-body moon", "-num_times 1", "-output pom.jpg", "-geometry 300x300"}
+	pom.ImageArgs = []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
 	err = updatePomImage(pom.ImageArgs)
 	checkError(err)
 

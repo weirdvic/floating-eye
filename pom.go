@@ -136,6 +136,6 @@ func getPomText() (pomText string) {
 
 // updatePomImage runs xplanet command with provided arguments and returns an error if there any
 func updatePomImage(args []string) error {
-	_, e := exec.Command("xplanet", args...).Output()
-	return e
+	c := exec.Command("xplanet", args...)
+	return c.Run()
 }
