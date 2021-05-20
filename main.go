@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
@@ -47,24 +48,28 @@ var (
 	workers         sync.WaitGroup
 	queryChannel    = make(chan BotQuery, 100)
 	responseChannel = make(chan string, 100)
+	pom             pomRequest
 )
 
 func init() {
 	// Load config from file config.json and decode it to tgconfig struct
 	configfile, err := os.Open("config.json")
-	if err != nil {
-		log.Fatalln(err)
-	}
+	checkError(err)
 	defer configfile.Close()
 	decoder := json.NewDecoder(configfile)
 	err = decoder.Decode(&app.Conf)
-	if err != nil {
-		log.Fatalln(err)
-	} else {
-		log.Println("Config successfully loaded.")
-		log.Print("Available bots are: ")
-		log.Println(app.Conf.Irc.Bots)
-	}
+	checkError(err)
+	log.Println("Config successfully loaded.")
+	log.Print("Available bots are: ")
+	log.Println(app.Conf.Irc.Bots)
+
+	// Initialize Phase of Moon structure and update pom.jpg
+	pom.Updated = time.Now()
+	pom.Text = getPomText()
+	pom.ImageArgs = []string{"-origin earth", "-body moon", "-num_times 1", "-output pom.jpg", "-geometry 300x300"}
+	err = updatePomImage(pom.ImageArgs)
+	checkError(err)
+
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Conf.Tg.Token)
 	log.Printf("Created new bot with token: %s", app.Conf.Tg.Token)
@@ -75,17 +80,20 @@ func init() {
 
 	// Set start or help message handler
 	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
-	// Set main command handler
+	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
-	// Set !lastgame command handler
+	// Set Beholder IRC bot handlers
 	tgBot.HandleMessage("^!(scores|sb|players|who|variant)\\s*$", app.beholderHandler)
 	tgBot.HandleMessage("^!(whereis|streak|role|race)\\s*\\w*\\s*$", app.beholderHandler)
 	tgBot.HandleMessage("^!(lastgame|asc|lastasc)\\s*\\w*\\s*\\w*$", app.beholderHandler)
+	// Set !pom command handler
+	tgBot.HandleMessage("^!pom\\.*", app.pomHandler)
 
 	// Start the Telegram bot
 	go func() {
 		log.Println("Connecting to Telegram…")
-		log.Fatalln(tgBot.Start())
+		err := tgBot.Start()
+		checkError(err)
 	}()
 
 	// Initialize IRC config
@@ -99,9 +107,7 @@ func init() {
 
 	// Connect to IRC server
 	conn, err := net.Dial("tcp", app.Conf.Irc.Server+":"+app.Conf.Irc.Port)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	checkError(err)
 	app.IrcClient = irc.NewClient(conn, config)
 
 	c := make(chan os.Signal)
@@ -139,11 +145,19 @@ func goodSender(sender string) bool {
 	return false
 }
 
+// checkError is a simple wrapper for "if err != nil" construction
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	// Run IRC client
 	go func() {
 		log.Println("Connecting to IRC…")
-		log.Fatalln(app.IrcClient.Run())
+		err := app.IrcClient.Run()
+		checkError(err)
 	}()
 
 	// Run main worker and wait

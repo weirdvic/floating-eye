@@ -11,7 +11,11 @@
 
 ~cd floating-eye && go build~
 
-Отредактировать файл ~config.json.sample~, заполнив его собственными значениями и сохранить в ~config.json~:
+Для работы команды ~!pom~ нужно доустановить зависимости:
+
+~sudo apt install xplanet bsdgames~
+
+Отредактировать файл ~config.json.sample~, заполнив его собственными значениями:
 
 ~Token~ — токен вашего Telegram бота
 
