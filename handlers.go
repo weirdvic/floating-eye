@@ -9,8 +9,7 @@ import (
 )
 
 // Regexp defining commands that could be sent to IRC bot
-// const commandRegexp string = "^!(help|commands|ping|time|tell|hello|lastgame|asc|lastasc|scores|setmintc|whereis|players|who|streak|role|race|variant|rng|pom|(\\d{1,2}d\\d{1,4}))\\s*"
-const commandRegexp string = "^@(\\?|v\\?|V\\?|d\\?|e\\?|g\\?|b\\?|l(\\?|e\\?|t\\?)|s\\?|u(\\?|\\+\\?))\\s*\\S+"
+const commandRegexp string = `^@(\?|v\?|V\?|d\?|e\?|g\?|b\?|l(\?|e\?|t\?)|s\?|u(\?|\+\?))\s*\S+`
 
 func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
@@ -105,6 +104,7 @@ var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 	switch {
 	// Handle WELCOME event
 	case m.Command == "001":
+		c.Writef("MODE %v -R", app.Conf.Irc.Nick)
 		// Identify to the NickServ
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
@@ -114,7 +114,7 @@ var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 	case m.Command == "PING":
 		c.Write("PONG")
 	// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
-	case m.Command == "PRIVMSG" && goodSender(m.Name):
+	case m.Command == "PRIVMSG" && isAllowed(m.Name, app.Conf.Irc.Bots):
 		responseChannel <- m.Trailing()
 	default:
 		log.Println(m.Command, m.Params)

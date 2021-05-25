@@ -47,7 +47,8 @@ func isLeapYear(year int) int {
 // example: The Moon is Waxing Gibbous (60% of Full) Full moon in NetHack in 5 days.
 func getPomText() (pomText string) {
 	var (
-		inPhase, days int
+		inPhase, nextInPhase bool
+		days                 int
 	)
 	// first part of the message is the result of 'pom' command from bsdgames package
 	pomOut, err := exec.Command("pom").Output()
@@ -66,7 +67,9 @@ func getPomText() (pomText string) {
 	curPhase := getPhase(diy, year)
 
 	if curPhase == 0 || curPhase == 4 {
-		inPhase = 1
+		inPhase = true
+	} else {
+		inPhase = false
 	}
 
 	leapYear := isLeapYear(year)
@@ -77,15 +80,16 @@ func getPomText() (pomText string) {
 	for {
 		nextDiy++
 		days++
+		// if nextDiy is 31 Dec of a leap year
 		if nextDiy-leapYear == 365 {
 			nextDiy = 0
 			nextYear++
 		}
 		nextPhase = getPhase(nextDiy, nextYear)
 		if nextPhase == 0 || nextPhase == 4 {
-			nextInPhase = 1
+			nextInPhase = true
 		} else {
-			nextInPhase = 0
+			nextInPhase = false
 		}
 		if inPhase != nextInPhase {
 			break
@@ -136,6 +140,6 @@ func getPomText() (pomText string) {
 
 // updatePomImage runs xplanet command with provided arguments and returns an error if there any
 func updatePomImage(args []string) error {
-	_, e := exec.Command("xplanet", args...).Output()
-	return e
+	c := exec.Command("xplanet", args...)
+	return c.Run()
 }
