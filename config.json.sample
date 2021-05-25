@@ -1,6 +1,6 @@
 {
     "tg": {
-        "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"   
+        "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     }, 
     "irc": {
         "Server": "chat.freenode.net",

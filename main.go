@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -79,15 +81,15 @@ func init() {
 	tgBot.Use(stat)
 
 	// Set start or help message handler
-	tgBot.HandleMessage("^/(start|help)$", app.startHandler)
+	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
 	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
 	// Set Beholder IRC bot handlers
-	tgBot.HandleMessage("^!(scores|sb|players|who|variant)\\s*$", app.beholderHandler)
-	tgBot.HandleMessage("^!(whereis|streak|role|race)\\s*\\w*\\s*$", app.beholderHandler)
-	tgBot.HandleMessage("^!(lastgame|asc|lastasc)\\s*\\w*\\s*\\w*$", app.beholderHandler)
+	tgBot.HandleMessage(`^!(scores|sb|players|who|variant)\s*$`, app.beholderHandler)
+	tgBot.HandleMessage(`^!(whereis|streak|role|race)\s*\w*\s*$`, app.beholderHandler)
+	tgBot.HandleMessage(`^!(lastgame|asc|lastasc)\s*\w*\s*\w*$`, app.beholderHandler)
 	// Set !pom command handler
-	tgBot.HandleMessage("^!pom\\.*", app.pomHandler)
+	tgBot.HandleMessage(`^!pom\.*`, app.pomHandler)
 
 	// Start the Telegram bot
 	go func() {
@@ -128,17 +130,21 @@ func askBot(nick, text string) {
 // queryWorker reads from inboxChannel, passes the query text to IRC,
 // awaits for response from bot and sends the response text back to Telegram
 func queryWorker(c <-chan BotQuery) {
+	// This regexp is used to filter IRC color codes from Pinoclone's response
+	colorFilter := regexp.MustCompile(`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\w+)\s+\]`)
+	// This regexp is used to split Pinoclone's response in lines
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
 		botResponse := <-responseChannel
-		app.TgClient.SendMessage(q.Query.Chat.ID, botResponse)
+		botResponse = colorFilter.ReplaceAllString(botResponse, "[ $1$2 ]")
+		app.TgClient.SendMessage(q.Query.Chat.ID, strings.ReplaceAll(botResponse, "|", "\n"))
 	}
 }
 
-// goodSender checks if sender is in allowed senders list
-func goodSender(sender string) bool {
-	for _, s := range app.Conf.Irc.Bots {
-		if sender == s {
+// isAllowed checks if item is in allowed list
+func isAllowed(item string, list []string) bool {
+	for _, s := range list {
+		if item == s {
 			return true
 		}
 	}
