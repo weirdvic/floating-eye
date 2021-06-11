@@ -6,8 +6,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"regexp"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -112,50 +110,13 @@ func init() {
 	checkError(err)
 	app.IrcClient = irc.NewClient(conn, config)
 
+	// QUIT from IRC on SIGTERM
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
 		app.IrcClient.Write("QUIT")
 	}()
-}
-
-// askBot is a simple wrapper to send message to the IRC bot
-func askBot(nick, text string) {
-	app.IrcClient.WriteMessage(&irc.Message{
-		Command: "PRIVMSG",
-		Params:  []string{nick, text}})
-}
-
-// queryWorker reads from inboxChannel, passes the query text to IRC,
-// awaits for response from bot and sends the response text back to Telegram
-func queryWorker(c <-chan BotQuery) {
-	// This regexp is used to filter IRC color codes from Pinoclone's response
-	colorFilter := regexp.MustCompile(`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\w+)\s+\]`)
-	// This regexp is used to split Pinoclone's response in lines
-	for q := range c {
-		askBot(q.BotNick, q.Query.Text)
-		botResponse := <-responseChannel
-		botResponse = colorFilter.ReplaceAllString(botResponse, "[ $1$2 ]")
-		app.TgClient.SendMessage(q.Query.Chat.ID, strings.ReplaceAll(botResponse, "|", "\n"))
-	}
-}
-
-// isAllowed checks if item is in allowed list
-func isAllowed(item string, list []string) bool {
-	for _, s := range list {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-// checkError is a simple wrapper for "if err != nil" construction
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func main() {
