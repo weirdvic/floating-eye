@@ -1,13 +1,14 @@
 {
-    "tg": {
-        "Token": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    }, 
+    "telegram": {
+        "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",  
+        "admins": [00000000]
+    },
     "irc": {
-        "Server": "chat.freenode.net",
-        "Port": "6667",
-        "Nick": "changeme",
-        "Pass": "changeme",
-        "Name": "Full Name",
-        "Bots": ["firstbot", "secondbot", "thirdbot"]
+        "server": "irc.libera.chat",
+        "port": 6667,
+        "nick": "bot_nickname",
+        "pass": "bot_pass",
+        "name": "Bot Username",
+        "bots": ["Pinoclone", "Beholder"]
     }
 }

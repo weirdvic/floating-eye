@@ -14,7 +14,7 @@ import (
 
 // askBot is a simple wrapper to send message to the IRC bot
 func askBot(nick, text string) {
-	app.IrcClient.WriteMessage(&irc.Message{
+	app.IRC.Client.WriteMessage(&irc.Message{
 		Command: "PRIVMSG",
 		Params:  []string{nick, text}})
 }
@@ -45,14 +45,14 @@ func queryWorker(c <-chan BotQuery) {
 					fileName = "mon/WARNING 0.png"
 				}
 				// Send image with caption
-				app.TgClient.SendPhotoFile(q.Query.Chat.ID, fileName, tbot.OptCaption(botResponse))
+				app.Telegram.Client.SendPhotoFile(q.Query.Chat.ID, fileName, tbot.OptCaption(botResponse))
 			} else {
 				log.Println(err)
-				app.TgClient.SendMessage(q.Query.Chat.ID, botResponse)
+				app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)
 			}
 		} else {
 			// Send just text for other queries
-			app.TgClient.SendMessage(q.Query.Chat.ID, botResponse)
+			app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)
 		}
 	}
 }
@@ -72,10 +72,20 @@ func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 	}
 }
 
-// isAllowed checks if item is in allowed list
-func isAllowed(item string, list []string) bool {
-	for _, s := range list {
+// isAllowedBot checks if bot name is in allowed list
+func isAllowedBot(item string, a *Application) bool {
+	for _, s := range a.IRC.Bots {
 		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+// isAllowedAdmin checks if bot name is in allowed list
+func isAllowedAdmin(id int, a *Application) bool {
+	for _, s := range a.Telegram.Admins {
+		if id == s {
 			return true
 		}
 	}

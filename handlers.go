@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -13,14 +14,23 @@ const commandRegexp string = `^@(\?|v\?|V\?|d\?|e\?|g\?|b\?|l(\?|e\?|t\?)|s\?|u(
 
 func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
+		botStat[u.Message.From.ID] = u.Message.From.Username
 		start := time.Now()
 		h(u)
 		log.Printf("Handle time: %v", time.Now().Sub(start))
 	}
 }
 
+func (a *Application) statHandler(m *tbot.Message) {
+	if isAllowedAdmin(m.From.ID, a) {
+		a.Telegram.Client.SendMessage(m.Chat.ID, fmt.Sprintf("Known senders:\n%v", botStat))
+		return
+	}
+	a.Telegram.Client.SendMessage(m.Chat.ID, "You are not allowed to use this command…")
+}
+
 func (a *Application) startHandler(m *tbot.Message) {
-	a.TgClient.SendMessage(m.Chat.ID,
+	a.Telegram.Client.SendMessage(m.Chat.ID,
 		`This is a bot to query NetHack monsters stats.
 
 Available monster query commands are:
@@ -97,24 +107,24 @@ func (a *Application) pomHandler(m *tbot.Message) {
 		}
 	}
 	// Send the image back to Telegram with pom.Text as a caption
-	app.TgClient.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(pom.Text))
+	app.Telegram.Client.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(pom.Text))
 }
 
 var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 	switch {
 	// Handle WELCOME event
 	case m.Command == "001":
-		c.Writef("MODE %v -R", app.Conf.Irc.Nick)
+		c.Writef("MODE %v -R", app.IRC.Nick)
 		// Identify to the NickServ
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
-			Params:  []string{"NickServ", app.Conf.Irc.Nick, app.Conf.Irc.Pass},
+			Params:  []string{"NickServ", app.IRC.Nick, app.IRC.Pass},
 		})
 	// Handle PING command
 	case m.Command == "PING":
 		c.Write("PONG")
 	// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
-	case m.Command == "PRIVMSG" && isAllowed(m.Name, app.Conf.Irc.Bots):
+	case m.Command == "PRIVMSG" && isAllowedBot(m.Name, &app):
 		responseChannel <- m.Trailing()
 	default:
 		log.Println(m.Command, m.Params)
