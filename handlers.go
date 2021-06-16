@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -19,8 +20,18 @@ func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	}
 }
 
+func (a *Application) statHandler(m *tbot.Message) {
+	logUser(botStat, m)
+	if isAllowedAdmin(m.From.ID, a) {
+		a.Telegram.Client.SendMessage(m.Chat.ID, fmt.Sprintf("Known users:\n%v", botStat))
+		return
+	}
+	a.Telegram.Client.SendMessage(m.Chat.ID, "You are not allowed to use this command…")
+}
+
 func (a *Application) startHandler(m *tbot.Message) {
-	a.TgClient.SendMessage(m.Chat.ID,
+	logUser(botStat, m)
+	a.Telegram.Client.SendMessage(m.Chat.ID,
 		`This is a bot to query NetHack monsters stats.
 
 Available monster query commands are:
@@ -73,14 +84,17 @@ slth:  slashthem slth
 }
 
 func (a *Application) pinobotHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	queryChannel <- BotQuery{"Pinoclone", m}
 }
 
 func (a *Application) beholderHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	queryChannel <- BotQuery{"Beholder", m}
 }
 
 func (a *Application) pomHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	// Save time of the request
 	updateTime := time.Now()
 	// If pom.jpg wasn't updated in an hour do an update
@@ -97,24 +111,24 @@ func (a *Application) pomHandler(m *tbot.Message) {
 		}
 	}
 	// Send the image back to Telegram with pom.Text as a caption
-	app.TgClient.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(pom.Text))
+	app.Telegram.Client.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(pom.Text))
 }
 
 var ircHandlerFunc = irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
 	switch {
 	// Handle WELCOME event
 	case m.Command == "001":
-		c.Writef("MODE %v -R", app.Conf.Irc.Nick)
+		c.Writef("MODE %v -R", app.IRC.Nick)
 		// Identify to the NickServ
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
-			Params:  []string{"NickServ", app.Conf.Irc.Nick, app.Conf.Irc.Pass},
+			Params:  []string{"NickServ", app.IRC.Nick, app.IRC.Pass},
 		})
 	// Handle PING command
 	case m.Command == "PING":
 		c.Write("PONG")
 	// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
-	case m.Command == "PRIVMSG" && isAllowed(m.Name, app.Conf.Irc.Bots):
+	case m.Command == "PRIVMSG" && isAllowedBot(m.Name, &app):
 		responseChannel <- m.Trailing()
 	default:
 		log.Println(m.Command, m.Params)

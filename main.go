@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -15,27 +16,20 @@ import (
 )
 
 type Application struct {
-	TgClient  *tbot.Client
-	IrcClient *irc.Client
-	Conf      AppConfig
-}
-
-type AppConfig struct {
-	Tg  TgConfig
-	Irc IrcConfig
-}
-
-type TgConfig struct {
-	Token string
-}
-
-type IrcConfig struct {
-	Server string
-	Port   string
-	Nick   string
-	Pass   string
-	Name   string
-	Bots   []string
+	Telegram struct {
+		Client *tbot.Client
+		Token  string `json:token`
+		Admins []int  `json:admins`
+	} `json:telegram`
+	IRC struct {
+		Client *irc.Client
+		Server string   `json:server`
+		Port   int      `json:port`
+		Nick   string   `json:nick`
+		Pass   string   `json:pass`
+		Name   string   `json:name`
+		Bots   []string `json:bots`
+	} `json:irc`
 }
 
 type BotQuery struct {
@@ -49,6 +43,7 @@ var (
 	queryChannel    = make(chan BotQuery, 100)
 	responseChannel = make(chan string, 100)
 	pom             pomRequest
+	botStat         = make(map[int]string)
 )
 
 func init() {
@@ -57,11 +52,11 @@ func init() {
 	checkError(err)
 	defer configfile.Close()
 	decoder := json.NewDecoder(configfile)
-	err = decoder.Decode(&app.Conf)
+	err = decoder.Decode(&app)
 	checkError(err)
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
-	log.Println(app.Conf.Irc.Bots)
+	log.Println(app.IRC.Bots)
 
 	// Initialize Phase of Moon structure and update pom.jpg
 	pom.Updated = time.Now()
@@ -71,15 +66,17 @@ func init() {
 	checkError(err)
 
 	// Create new Telegram bot with token from config
-	tgBot := tbot.New(app.Conf.Tg.Token)
-	log.Printf("Created new bot with token: %s", app.Conf.Tg.Token)
-	app.TgClient = tgBot.Client()
+	tgBot := tbot.New(app.Telegram.Token)
+	log.Printf("Created new bot with token: %s", app.Telegram.Token)
+	app.Telegram.Client = tgBot.Client()
 
 	// Set middleware
 	tgBot.Use(stat)
 
 	// Set start or help message handler
 	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
+	// Set stat message handler
+	tgBot.HandleMessage(`^/stat$`, app.statHandler)
 	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
 	// Set Beholder IRC bot handlers
@@ -98,24 +95,24 @@ func init() {
 
 	// Initialize IRC config
 	config := irc.ClientConfig{
-		Nick:    app.Conf.Irc.Nick,
-		Pass:    app.Conf.Irc.Pass,
-		User:    app.Conf.Irc.Nick,
-		Name:    app.Conf.Irc.Name,
+		Nick:    app.IRC.Nick,
+		Pass:    app.IRC.Pass,
+		User:    app.IRC.Nick,
+		Name:    app.IRC.Name,
 		Handler: ircHandlerFunc,
 	}
 
 	// Connect to IRC server
-	conn, err := net.Dial("tcp", app.Conf.Irc.Server+":"+app.Conf.Irc.Port)
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", app.IRC.Server, app.IRC.Port))
 	checkError(err)
-	app.IrcClient = irc.NewClient(conn, config)
+	app.IRC.Client = irc.NewClient(conn, config)
 
 	// QUIT from IRC on SIGTERM
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		app.IrcClient.Write("QUIT")
+		app.IRC.Client.Write("QUIT")
 	}()
 }
 
@@ -123,7 +120,7 @@ func main() {
 	// Run IRC client
 	go func() {
 		log.Println("Connecting to IRC…")
-		err := app.IrcClient.Run()
+		err := app.IRC.Client.Run()
 		checkError(err)
 	}()
 
