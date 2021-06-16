@@ -14,7 +14,6 @@ const commandRegexp string = `^@(\?|v\?|V\?|d\?|e\?|g\?|b\?|l(\?|e\?|t\?)|s\?|u(
 
 func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
-		botStat[u.Message.From.ID] = u.Message.From.Username
 		start := time.Now()
 		h(u)
 		log.Printf("Handle time: %v", time.Now().Sub(start))
@@ -22,14 +21,16 @@ func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 }
 
 func (a *Application) statHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	if isAllowedAdmin(m.From.ID, a) {
-		a.Telegram.Client.SendMessage(m.Chat.ID, fmt.Sprintf("Known senders:\n%v", botStat))
+		a.Telegram.Client.SendMessage(m.Chat.ID, fmt.Sprintf("Known users:\n%v", botStat))
 		return
 	}
 	a.Telegram.Client.SendMessage(m.Chat.ID, "You are not allowed to use this command…")
 }
 
 func (a *Application) startHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	a.Telegram.Client.SendMessage(m.Chat.ID,
 		`This is a bot to query NetHack monsters stats.
 
@@ -83,14 +84,17 @@ slth:  slashthem slth
 }
 
 func (a *Application) pinobotHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	queryChannel <- BotQuery{"Pinoclone", m}
 }
 
 func (a *Application) beholderHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	queryChannel <- BotQuery{"Beholder", m}
 }
 
 func (a *Application) pomHandler(m *tbot.Message) {
+	logUser(botStat, m)
 	// Save time of the request
 	updateTime := time.Now()
 	// If pom.jpg wasn't updated in an hour do an update

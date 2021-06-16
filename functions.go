@@ -92,6 +92,15 @@ func isAllowedAdmin(id int, a *Application) bool {
 	return false
 }
 
+// logUser checks if user interacted with bot before and logs user's command
+func logUser(stat map[int]string, m *tbot.Message) {
+	if _, ok := stat[m.From.ID]; !ok {
+		stat[m.From.ID] = m.From.Username
+	}
+	log.Printf("Incoming message from: ID: %d Name: %s", m.From.ID, m.From.Username)
+	log.Printf("Command: %s", m.Text)
+}
+
 // checkError is a simple wrapper for "if err != nil" construction
 func checkError(err error) {
 	if err != nil {
