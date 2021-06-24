@@ -49,11 +49,15 @@ var (
 func init() {
 	// Load config from file config.json and decode it to tgconfig struct
 	configfile, err := os.Open("config.json")
-	checkError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer configfile.Close()
 	decoder := json.NewDecoder(configfile)
 	err = decoder.Decode(&app)
-	checkError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(app.IRC.Bots)
@@ -63,7 +67,9 @@ func init() {
 	pom.Text = getPomText()
 	pom.ImageArgs = []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
 	err = updatePomImage(pom.ImageArgs)
-	checkError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Telegram.Token)
@@ -87,11 +93,13 @@ func init() {
 	tgBot.HandleMessage(`^!pom\.*`, app.pomHandler)
 
 	// Start the Telegram bot
-	go func() {
-		log.Println("Connecting to Telegram…")
-		err := tgBot.Start()
-		checkError(err)
-	}()
+	log.Println("Connecting to Telegram…")
+	go func(bot *tbot.Server) {
+		err := bot.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(tgBot)
 
 	// Initialize IRC config
 	config := irc.ClientConfig{
@@ -104,30 +112,34 @@ func init() {
 
 	// Connect to IRC server
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", app.IRC.Server, app.IRC.Port))
-	checkError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 	app.IRC.Client = irc.NewClient(conn, config)
 
 	// QUIT from IRC on SIGTERM
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
+	go func(w *irc.Writer) {
 		<-c
-		app.IRC.Client.Write("QUIT")
-	}()
+		w.Write("QUIT")
+	}(app.IRC.Client.Writer)
 }
 
 func main() {
 	// Run IRC client
-	go func() {
-		log.Println("Connecting to IRC…")
-		err := app.IRC.Client.Run()
-		checkError(err)
-	}()
+	log.Println("Connecting to IRC…")
+	go func(c *irc.Client) {
+		err := c.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(app.IRC.Client)
 
 	// Run main worker and wait
+	log.Println("Starting inbox worker…")
 	workers.Add(1)
 	go func() {
-		log.Println("Starting inbox worker…")
 		queryWorker(queryChannel)
 		workers.Done()
 	}()

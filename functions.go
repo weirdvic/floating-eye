@@ -100,10 +100,3 @@ func logUser(stat map[int]string, m *tbot.Message) {
 	log.Printf("Incoming message from: ID: %d Name: %s", m.From.ID, m.From.Username)
 	log.Printf("Command: %s", m.Text)
 }
-
-// checkError is a simple wrapper for "if err != nil" construction
-func checkError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
