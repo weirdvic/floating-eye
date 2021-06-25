@@ -73,7 +73,7 @@ func init() {
 
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Telegram.Token)
-	log.Printf("Created new bot with token: %s", app.Telegram.Token)
+	log.Printf("Created new bot…")
 	app.Telegram.Client = tgBot.Client()
 
 	// Set middleware
