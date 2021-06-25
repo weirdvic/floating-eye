@@ -18,7 +18,7 @@ jobs:
       env:
         BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
       run: |
-        'cat ${BOT_CONFIG} > ./config.json'
+        cat ${BOT_CONFIG} >> ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
   deploy:
     runs-on: self-hosted
