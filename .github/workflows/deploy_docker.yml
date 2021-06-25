@@ -20,6 +20,7 @@ jobs:
       run: |
         echo ${BOT_CONFIG} > ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
+        rm -f ./config.json
   deploy:
     runs-on: self-hosted
     needs: build
