@@ -22,6 +22,7 @@ jobs:
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
   deploy:
     runs-on: self-hosted
+    needs: build
     steps:
     - name: Update running image
       run: |
