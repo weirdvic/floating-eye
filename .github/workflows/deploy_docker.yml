@@ -17,6 +17,7 @@ jobs:
     - name: Build the Docker image
       env:
         BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
+      shell: bash
       run: |
         echo ${BOT_CONFIG} >> ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
@@ -25,6 +26,7 @@ jobs:
     needs: build
     steps:
     - name: Update running image
+      shell: bash
       run: |
         docker stop ${REPO_NAME} || true
         docker run --rm --name=${REPO_NAME} --detach ${REPO_NAME}
