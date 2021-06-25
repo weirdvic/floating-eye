@@ -15,11 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
+    - shell: bash
       env:
-        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
-      shell: bash
+        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}      
       run: |
-        echo ${BOT_CONFIG} >> ./config.json
+        echo "$BOT_CONFIG" >> ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
   deploy:
     runs-on: self-hosted
