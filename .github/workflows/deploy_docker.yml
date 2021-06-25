@@ -19,6 +19,8 @@ jobs:
       env:
         BOT_CONFIG: ${{ secrets.BOT_CONFIG }}      
       run: |
+        echo "$BOT_CONFIG"
+        echo env.BOT_CONFIG
         echo "$BOT_CONFIG" >> ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
   deploy:
