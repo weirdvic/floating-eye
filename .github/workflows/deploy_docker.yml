@@ -1,0 +1,29 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      env: # Or as an environment variable
+        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
+      run: |
+        cat ${BOT_CONFIG} > ./config.json
+        docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
+  deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Update running image
+      run: |
+        docker stop ${REPO_NAME} || true
+        docker run --rm --name=${REPO_NAME} --detach ${REPO_NAME}
