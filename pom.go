@@ -1,16 +1,16 @@
-package main
+package floatingeye
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"time"
 )
 
-// pomRequest stores last pom update time, pom description text and xplanet arguments
+// pomRequest stores last pom update time and pom description text
 type pomRequest struct {
-	Updated   time.Time
+	UpdatedAt time.Time
 	Text      string
-	ImageArgs []string
 }
 
 // getPhase is a rewrite of the same function from https://alt.org/nethack/moon/pom.pl
@@ -139,7 +139,18 @@ func getPomText() (pomText string) {
 }
 
 // updatePomImage runs xplanet command with provided arguments and returns an error if there any
-func updatePomImage(args []string) error {
+func updatePomImage() error {
+	args := []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
 	c := exec.Command("xplanet", args...)
 	return c.Run()
+}
+
+func (p *pomRequest) init() {
+	// Initialize Phase of Moon structure and update pom.jpg
+	p.UpdatedAt = time.Now()
+	p.Text = getPomText()
+	err := updatePomImage()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
