@@ -1,4 +1,4 @@
-package floatingeye
+package main
 
 import (
 	"fmt"
@@ -89,7 +89,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
 	app.IRC.Client = irc.NewClient(conn, config)
 
 	// Send /QUIT to IRC on SIGTERM

@@ -1,4 +1,4 @@
-package floatingeye
+package main
 
 import (
 	"fmt"
