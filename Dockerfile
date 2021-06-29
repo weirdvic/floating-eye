@@ -1,12 +1,11 @@
 FROM golang AS build
 WORKDIR /src
-COPY *.go go.mod ./
+COPY *.go go.mod config.json ./
 RUN go mod tidy && go build -v -o /out/floating_eye .
 FROM ubuntu AS prod
 WORKDIR /bot
-COPY mon ./mon
+COPY monsters ./monsters
 COPY xplanet ./xplanet
-COPY config.json .
 RUN echo "Europe/Moscow" > /etc/timezone && \
     apt update && \
     apt install -y bsdgames ca-certificates xplanet && \

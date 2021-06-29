@@ -1,7 +1,6 @@
-package main
+package floatingeye
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -9,67 +8,22 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
 )
 
-type Application struct {
-	Telegram struct {
-		Client *tbot.Client
-		Token  string `json:token`
-		Admins []int  `json:admins`
-	} `json:telegram`
-	IRC struct {
-		Client *irc.Client
-		Server string   `json:server`
-		Port   int      `json:port`
-		Nick   string   `json:nick`
-		Pass   string   `json:pass`
-		Name   string   `json:name`
-		Bots   []string `json:bots`
-	} `json:irc`
-}
-
-type BotQuery struct {
-	BotNick string
-	Query   *tbot.Message
-}
-
 var (
-	app             Application
+	app             application
 	workers         sync.WaitGroup
-	queryChannel    = make(chan BotQuery, 100)
+	queryChannel    = make(chan botQuery, 100)
 	responseChannel = make(chan string, 100)
 	pom             pomRequest
-	botStat         = make(map[int]string)
 )
 
 func init() {
-	// Load config from file config.json and decode it to tgconfig struct
-	configfile, err := os.Open("config.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer configfile.Close()
-	decoder := json.NewDecoder(configfile)
-	err = decoder.Decode(&app)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Config successfully loaded.")
-	log.Print("Available bots are: ")
-	log.Println(app.IRC.Bots)
-
-	// Initialize Phase of Moon structure and update pom.jpg
-	pom.Updated = time.Now()
-	pom.Text = getPomText()
-	pom.ImageArgs = []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
-	err = updatePomImage(pom.ImageArgs)
-	if err != nil {
-		log.Fatal(err)
-	}
+	app.readConfig()
+	pom.init()
 
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Telegram.Token)
@@ -77,7 +31,7 @@ func init() {
 	app.Telegram.Client = tgBot.Client()
 
 	// Set middleware
-	tgBot.Use(stat)
+	tgBot.Use(timeStat)
 
 	// Set start or help message handler
 	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
@@ -103,11 +57,31 @@ func init() {
 
 	// Initialize IRC config
 	config := irc.ClientConfig{
-		Nick:    app.IRC.Nick,
-		Pass:    app.IRC.Pass,
-		User:    app.IRC.Nick,
-		Name:    app.IRC.Name,
-		Handler: ircHandlerFunc,
+		Nick: app.IRC.Nick,
+		Pass: app.IRC.Pass,
+		User: app.IRC.Nick,
+		Name: app.IRC.Name,
+		Handler: irc.HandlerFunc(func(c *irc.Client, m *irc.Message) {
+			switch {
+			// Handle WELCOME event
+			case m.Command == "001":
+				c.Writef("MODE %v -R", app.IRC.Nick)
+				// Identify to the NickServ
+				c.WriteMessage(&irc.Message{
+					Command: "PRIVMSG",
+					Params:  []string{"NickServ", app.IRC.Nick, app.IRC.Pass},
+				})
+			// Handle PING command
+			case m.Command == "PING":
+				c.Write("PONG")
+			// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
+			case m.Command == "PRIVMSG" && isAllowedBot(m.Name, &app):
+				responseChannel <- m.Trailing()
+			default:
+				log.Println(m.Command, m.Params)
+			}
+		},
+		),
 	}
 
 	// Connect to IRC server
@@ -115,9 +89,10 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer conn.Close()
 	app.IRC.Client = irc.NewClient(conn, config)
 
-	// QUIT from IRC on SIGTERM
+	// Send /QUIT to IRC on SIGTERM
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func(w *irc.Writer) {
@@ -127,7 +102,7 @@ func init() {
 }
 
 func main() {
-	// Run IRC client
+	// Start IRC client
 	log.Println("Connecting to IRC…")
 	go func(c *irc.Client) {
 		err := c.Run()
@@ -136,13 +111,13 @@ func main() {
 		}
 	}(app.IRC.Client)
 
-	// Run main worker and wait
+	// Start main worker and wait
 	log.Println("Starting inbox worker…")
 	workers.Add(1)
-	go func() {
-		queryWorker(queryChannel)
+	go func(c chan botQuery) {
+		queryWorker(c)
 		workers.Done()
-	}()
+	}(queryChannel)
 
 	workers.Wait()
 }
