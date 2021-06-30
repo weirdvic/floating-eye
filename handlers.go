@@ -25,7 +25,7 @@ func timeStat(h tbot.UpdateHandler) tbot.UpdateHandler {
 // Handler for /stat command
 func (a *application) statHandler(m *tbot.Message) {
 	logUser(botStat, m)
-	if isAllowedAdmin(m.From.ID, a) {
+	if a.checkAdmin(m.From.ID) {
 		a.Telegram.Client.SendMessage(m.Chat.ID, fmt.Sprintf("Known users:\n%v", botStat))
 		return
 	}

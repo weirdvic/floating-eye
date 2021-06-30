@@ -75,7 +75,7 @@ func init() {
 			case m.Command == "PING":
 				c.Write("PONG")
 			// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
-			case m.Command == "PRIVMSG" && isAllowedBot(m.Name, &app):
+			case m.Command == "PRIVMSG" && app.checkBotName(m.Name):
 				responseChannel <- m.Trailing()
 			default:
 				log.Println(m.Command, m.Params)
