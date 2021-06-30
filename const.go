@@ -1,4 +1,4 @@
-package floatingeye
+package main
 
 const welcomeMessage string = `This is a bot to query NetHack monsters stats.
 
