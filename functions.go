@@ -63,20 +63,20 @@ func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 	}
 }
 
-// isAllowedBot checks if bot name is in allowed list
-func isAllowedBot(item string, a *application) bool {
-	for _, s := range a.IRC.Bots {
-		if item == s {
+// checkBotName checks if bot name is in allowed list
+func (a *application) checkBotName(item string) bool {
+	for _, v := range a.IRC.Bots {
+		if item == v {
 			return true
 		}
 	}
 	return false
 }
 
-// isAllowedAdmin checks if bot name is in allowed list
-func isAllowedAdmin(id int, a *application) bool {
-	for _, s := range a.Telegram.Admins {
-		if id == s {
+// checkAdmin checks if user's telegram ID is in allowed list
+func (a *application) checkAdmin(id int) bool {
+	for _, v := range a.Telegram.Admins {
+		if id == v {
 			return true
 		}
 	}
