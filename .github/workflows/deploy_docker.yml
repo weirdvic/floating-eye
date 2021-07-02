@@ -26,6 +26,6 @@ jobs:
     - name: Update running image
       shell: bash
       run: |
-        docker stop ${REPO_NAME}
+        docker stop ${REPO_NAME} || true
         docker rm ${REPO_NAME}
         docker run --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
