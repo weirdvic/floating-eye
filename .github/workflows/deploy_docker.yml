@@ -29,4 +29,4 @@ jobs:
       shell: bash
       run: |
         docker stop ${REPO_NAME} || true
-        docker run --rm --name=${REPO_NAME} --detach ${REPO_NAME}
+        docker run --rm --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
