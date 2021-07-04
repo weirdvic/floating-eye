@@ -18,12 +18,11 @@ var (
 	workers         sync.WaitGroup
 	queryChannel    = make(chan botQuery, 100)
 	responseChannel = make(chan string, 100)
-	pom             pomRequest
 )
 
 func init() {
 	app.readConfig()
-	pom.init()
+	PoM.init()
 
 	// Create new Telegram bot with token from config
 	tgBot := tbot.New(app.Telegram.Token)
@@ -35,8 +34,6 @@ func init() {
 
 	// Set start or help message handler
 	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
-	// Set stat message handler
-	tgBot.HandleMessage(`^/stat$`, app.statHandler)
 	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
 	// Set Beholder IRC bot handlers

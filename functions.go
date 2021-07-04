@@ -83,15 +83,6 @@ func (a *application) checkAdmin(id int) bool {
 	return false
 }
 
-// logUser checks if user interacted with bot before and logs user's command
-func logUser(stat map[int]string, m *tbot.Message) {
-	if _, ok := stat[m.From.ID]; !ok {
-		stat[m.From.ID] = m.From.Username
-	}
-	log.Printf("Incoming message from: ID: %d Name: %s", m.From.ID, m.From.Username)
-	log.Printf("Command: %s", m.Text)
-}
-
 // queryWorker reads from inboxChannel, passes the query text to IRC,
 // awaits for response from bot and sends the response text back to Telegram
 func queryWorker(c <-chan botQuery) {
@@ -118,7 +109,12 @@ func queryWorker(c <-chan botQuery) {
 					fileName = "monsters/WARNING 0.png"
 				}
 				// Send image with caption
-				app.Telegram.Client.SendPhotoFile(q.Query.Chat.ID, fileName, tbot.OptCaption(botResponse))
+				app.Telegram.Client.SendPhotoFile(
+					q.Query.Chat.ID,
+					fileName,
+					tbot.OptCaption(botResponse),
+					tbot.OptReplyToMessageID(q.Query.MessageID),
+				)
 			} else {
 				log.Println(err)
 				app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)

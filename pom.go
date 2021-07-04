@@ -13,6 +13,8 @@ type pomRequest struct {
 	Text      string
 }
 
+var PoM pomRequest
+
 // getPhase is a rewrite of the same function from https://alt.org/nethack/moon/pom.pl
 // which in turn is a rewrite of NetHack's phase_of_the_moon function
 func getPhase(diy, year int) int {
@@ -43,21 +45,21 @@ func isLeapYear(year int) int {
 	return leapFlag
 }
 
-// getPomText is used to construct string describing current moon phase
+// updateText is used to construct string describing current moon phase
 // example: The Moon is Waxing Gibbous (60% of Full) Full moon in NetHack in 5 days.
-func getPomText() (pomText string) {
+func (p *pomRequest) updateText() {
 	var (
 		inPhase, nextInPhase bool
 		days                 int
 	)
 	// first part of the message is the result of 'pom' command from bsdgames package
-	pomOut, err := exec.Command("pom").Output()
+	pomOutput, err := exec.Command("pom").Output()
 	if err != nil {
-		pomText = err.Error()
-		return pomText
+		p.Text = err.Error()
+		return
 	}
 	// appending first part of the message
-	pomText = string(pomOut)
+	p.Text = string(pomOutput)
 
 	localtime := time.Now()
 	hour := localtime.Hour()
@@ -99,47 +101,47 @@ func getPomText() (pomText string) {
 	// completing the message string with NetHack related info
 	switch {
 	case curPhase == 0:
-		pomText += "New moon in NetHack "
+		p.Text += "New moon in NetHack "
 		if days == 1 {
-			pomText += "until midnight, "
+			p.Text += "until midnight, "
 		} else {
-			pomText += fmt.Sprintf("for the next %d days.", days)
+			p.Text += fmt.Sprintf("for the next %d days.", days)
 		}
 	case curPhase == 4:
-		pomText += "Full moon in NetHack "
+		p.Text += "Full moon in NetHack "
 		if days == 1 {
-			pomText += "until midnight, "
+			p.Text += "until midnight, "
 		} else {
-			pomText += fmt.Sprintf("for the next %d days.", days)
+			p.Text += fmt.Sprintf("for the next %d days.", days)
 		}
 	case curPhase < 4:
-		pomText += "Full moon in NetHack "
+		p.Text += "Full moon in NetHack "
 		if days == 1 {
-			pomText += "at midnight, "
+			p.Text += "at midnight, "
 		} else {
-			pomText += fmt.Sprintf("in %d days.", days)
+			p.Text += fmt.Sprintf("in %d days.", days)
 		}
 	default:
-		pomText += "New moon in NetHack "
+		p.Text += "New moon in NetHack "
 		if days == 1 {
-			pomText += "at midnight, "
+			p.Text += "at midnight, "
 		} else {
-			pomText += fmt.Sprintf("in %d days.", days)
+			p.Text += fmt.Sprintf("in %d days.", days)
 		}
 	}
 	// add hour(s) to the message
 	if days == 1 {
-		pomText += fmt.Sprintf("%d hour", 24-hour)
+		p.Text += fmt.Sprintf("%d hour", 24-hour)
 		if 24-hour != 1 {
-			pomText += "s"
+			p.Text += "s"
 		}
-		pomText += " from now."
+		p.Text += " from now."
 	}
-	return pomText
+	return
 }
 
-// updatePomImage runs xplanet command with provided arguments and returns an error if there any
-func updatePomImage() error {
+// updateImage runs xplanet command with provided arguments and returns an error if there any
+func (p *pomRequest) updateImage() error {
 	args := []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
 	c := exec.Command("xplanet", args...)
 	return c.Run()
@@ -148,8 +150,8 @@ func updatePomImage() error {
 func (p *pomRequest) init() {
 	// Initialize Phase of Moon structure and update pom.jpg
 	p.UpdatedAt = time.Now()
-	p.Text = getPomText()
-	err := updatePomImage()
+	p.updateText()
+	err := p.updateImage()
 	if err != nil {
 		log.Fatal(err)
 	}

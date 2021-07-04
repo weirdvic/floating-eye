@@ -1,6 +1,6 @@
 package main
 
-const welcomeMessage string = `This is a bot to query NetHack monsters stats.
+const WELCOME_MESSAGE string = `This is a bot to query NetHack monsters stats.
 
 Available monster query commands are:
 @?[monster] or @v?[monster]:  NetHack 3.7
