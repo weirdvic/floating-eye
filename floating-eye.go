@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	app.readConfig()
+	app.init()
 	PoM.init()
 
 	// Create new Telegram bot with token from config

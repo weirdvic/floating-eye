@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 
@@ -127,7 +128,7 @@ func queryWorker(c <-chan botQuery) {
 }
 
 // readConfig decodes embedded config.json file to struct
-func (a *application) readConfig() {
+func (a *application) init() {
 	// Decode embedded config file to app struct
 	err := json.Unmarshal(configFile, a)
 	if err != nil {
@@ -136,5 +137,20 @@ func (a *application) readConfig() {
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(a.IRC.Bots)
+	// Check if dependency commands are available in the system
+	var commands = []string{"pom", "xplanet"}
+	for _, v := range commands {
+		path, err := exec.LookPath(v)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Command %s is located at %s\n", v, path)
+	}
+	// Check if "monsters" directory exists
+	_, err = os.Stat("monsters")
+	if os.IsNotExist(err) {
+		log.Fatal("Monster images directory does not exist!")
+	}
 
+	log.Println("All checks passed…")
 }
