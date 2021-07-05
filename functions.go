@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/yanzay/tbot/v2"
@@ -153,4 +154,11 @@ func (a *application) init() {
 	}
 
 	log.Println("All checks passed…")
+}
+
+func (a *application) shutdown(reason string) {
+	a.Telegram.Client.SendMessage(
+		strconv.Itoa(a.Telegram.Admins[0]),
+		fmt.Sprintf("Shutting down on: %s", reason))
+	a.IRC.Client.Write("QUIT")
 }
