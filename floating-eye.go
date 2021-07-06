@@ -91,10 +91,10 @@ func init() {
 	// Send /QUIT to IRC on SIGTERM
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func(w *irc.Writer) {
+	go func(a *application) {
 		<-c
-		w.Write("QUIT")
-	}(app.IRC.Client.Writer)
+		a.shutdown("SIGTERM")
+	}(&app)
 }
 
 func main() {
