@@ -19,18 +19,18 @@ import (
 type application struct {
 	Telegram struct {
 		Client *tbot.Client
-		Token  string `json:token`
-		Admins []int  `json:admins`
-	} `json:telegram`
+		Token  string `json:"token"`
+		Admins []int  `json:"admins"`
+	} `json:"telegram"`
 	IRC struct {
 		Client *irc.Client
-		Server string   `json:server`
-		Port   int      `json:port`
-		Nick   string   `json:nick`
-		Pass   string   `json:pass`
-		Name   string   `json:name`
-		Bots   []string `json:bots`
-	} `json:irc`
+		Server string   `json:"server"`
+		Port   int      `json:"port"`
+		Nick   string   `json:"nick"`
+		Pass   string   `json:"pass"`
+		Name   string   `json:"name"`
+		Bots   []string `json:"bots"`
+	} `json:"irc"`
 }
 
 type botQuery struct {
@@ -53,16 +53,16 @@ func askBot(nick, text string) {
 // getMonsterName parses string to extract monster's name
 func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 	if r.MatchString(s) != true {
-		return "", errors.New("Provided string does not contain a monster name!")
+		return "", errors.New("provided string does not contain a monster name")
 	}
 	match := r.FindStringSubmatch(s)
 	if match[2] == "" {
 		name = match[1]
 		return name, nil
-	} else {
-		name = match[2]
-		return name, nil
 	}
+	// else
+	name = match[2]
+	return name, nil
 }
 
 // checkBotName checks if bot name is in allowed list
