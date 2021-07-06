@@ -26,7 +26,7 @@ func timeStat(h tbot.UpdateHandler) tbot.UpdateHandler {
 // Handler for /start command
 func (a *application) startHandler(m *tbot.Message) {
 	// WELCOME_MESSAGE is defined in const.go
-	a.Telegram.Client.SendMessage(m.Chat.ID, WELCOME_MESSAGE)
+	a.Telegram.Client.SendMessage(m.Chat.ID, welcomeMessage)
 }
 
 // Handler for commands related to IRC Pinobot

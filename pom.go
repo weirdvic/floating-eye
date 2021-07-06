@@ -13,6 +13,7 @@ type pomRequest struct {
 	Text      string
 }
 
+// PoM variable is used to store phase of moon data
 var PoM pomRequest
 
 // getPhase is a rewrite of the same function from https://alt.org/nethack/moon/pom.pl
