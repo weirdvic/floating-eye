@@ -1,0 +1,57 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    runs-on: oracle
+    steps:
+    - name: Notify on build start
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} triggered its first step.
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      env:
+        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
+      run: |
+        echo ${BOT_CONFIG} > ./config.json
+        docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
+        rm -f ./config.json
+    - name: Send build status
+      if: always()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} status: ${{ job.status }}
+  deploy:
+    runs-on: oracle
+    needs: build
+    steps:
+    - name: Notify on deploy start
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} triggered its first step.
+    - name: Update running image
+      shell: bash
+      run: |
+        docker stop ${REPO_NAME} || true
+        docker rm ${REPO_NAME}
+        docker run --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
+    - name: Send deploy status
+      if: always()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} status: ${{ job.status }}
