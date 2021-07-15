@@ -1,6 +1,5 @@
-#+title: Floating Eye Bot
-
-* Описание
+![Build](https://github.com/weirdvic/floating-eye/actions/workflows/main.yml/badge.svg?event=pull_request)
+# Описание
 Простой Telegram бот для игры NetHack.
 
 Фактически большая часть команд реализована через запросы к ботам Beholder и Pinobot, находящимся в IRC Libera chat.
