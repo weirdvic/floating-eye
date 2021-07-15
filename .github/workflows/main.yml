@@ -31,7 +31,7 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.event_name }} event for ${{ commit.sha }} status: ${{ job.status }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} status is ${{ job.status }}
   deploy:
     runs-on: oracle
     needs: build
@@ -54,4 +54,4 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.event_name }} event for ${{ commit.sha }} status: ${{ job.status }}
+        args: The ${{ github.event_name }} event for ${{ commit.sha }} status is ${{ job.status }}
