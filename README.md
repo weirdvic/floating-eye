@@ -1,4 +1,4 @@
-![Build](https://github.com/weirdvic/floating-eye/actions/workflows/main.yml/badge.svg?event=pull_request)
+![Build](https://github.com/weirdvic/floating-eye/actions/workflows/main.yml/badge.svg)
 # Описание
 Простой Telegram бот для игры NetHack.
 
