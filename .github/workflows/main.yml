@@ -11,52 +11,22 @@ jobs:
   build:
     runs-on: marilith
     steps:
-
-    - name: Add SHORT_SHA env property with commit short sha
-      run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
-    - name: Notify on build start
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.job }} event for ${{ github.sha }} triggered its first step.
-
     - uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build Docker image
       env:
         BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
       run: |
         echo ${BOT_CONFIG} > ./config.json
         docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
         rm -f ./config.json
-
-    - name: Send build status
-      if: always()
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.job }} event for ${{ github.sha }} status is ${{ job.status }}
+  
   deploy:
     runs-on: marilith
     needs: build
     steps:
-    - name: Notify on deploy start
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.job }} event for ${{ github.sha }} triggered its first step.
     - name: Update running image
       shell: bash
       run: |
         docker stop ${REPO_NAME}
         docker rm ${REPO_NAME}
         docker run --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
-    - name: Send deploy status
-      if: always()
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        args: The ${{ github.job }} event for ${{ github.sha }} status is ${{ job.status }}
