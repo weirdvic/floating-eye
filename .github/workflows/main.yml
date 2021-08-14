@@ -9,7 +9,7 @@ env:
 
 jobs:
   build:
-    runs-on: oracle
+    runs-on: marilith
     steps:
 
     - name: Add SHORT_SHA env property with commit short sha
@@ -38,7 +38,7 @@ jobs:
         token: ${{ secrets.TELEGRAM_TOKEN }}
         args: The ${{ github.job }} event for ${{ github.sha }} status is ${{ job.status }}
   deploy:
-    runs-on: oracle
+    runs-on: marilith
     needs: build
     steps:
     - name: Notify on deploy start
