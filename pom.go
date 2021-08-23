@@ -138,7 +138,6 @@ func (p *pomRequest) updateText() {
 		}
 		p.Text += " from now."
 	}
-	return
 }
 
 // updateImage runs xplanet command with provided arguments and returns an error if there any

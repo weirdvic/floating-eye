@@ -19,7 +19,7 @@ func timeStat(h tbot.UpdateHandler) tbot.UpdateHandler {
 			u.Message.From.Username,
 			u.Message.From.FirstName,
 			u.Message.From.LastName)
-		log.Printf("Handle time: %v", time.Now().Sub(start))
+		log.Printf("Handle time: %v", time.Since(start))
 	}
 }
 
@@ -40,19 +40,18 @@ func (a *application) beholderHandler(m *tbot.Message) {
 }
 
 // Handler for !pom command and moon phase calculation
-// Variable PoM of type pomRequest must be declared and init'd beforehand
+// Variable PoM of type pomRequest must be created at init
 func (a *application) pomHandler(m *tbot.Message) {
 	// Save time of the request
 	updateTime := time.Now()
 	// If pom.jpg wasn't updated in an hour do an update
 	if PoM.UpdatedAt.Hour()-updateTime.Hour() != 0 {
 		err := PoM.updateImage()
-		switch {
-		// in case there was an error running xplanets send this error as a message
-		case err != nil:
+		/* in case there was an error running xplanets send this error as a message
+		   otherwise update pom.Text and save the update timestamp */
+		if err != nil {
 			PoM.Text = err.Error()
-		// otherwise update pom.Text and save the update timestamp
-		default:
+		} else {
 			PoM.updateText()
 			PoM.UpdatedAt = updateTime
 		}

@@ -52,7 +52,7 @@ func askBot(nick, text string) {
 
 // getMonsterName parses string to extract monster's name
 func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
-	if r.MatchString(s) != true {
+	if !r.MatchString(s) {
 		return "", errors.New("provided string does not contain a monster name")
 	}
 	match := r.FindStringSubmatch(s)
@@ -69,16 +69,6 @@ func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 func (a *application) checkBotName(item string) bool {
 	for _, v := range a.IRC.Bots {
 		if item == v {
-			return true
-		}
-	}
-	return false
-}
-
-// checkAdmin checks if user's telegram ID is in allowed list
-func (a *application) checkAdmin(id int) bool {
-	for _, v := range a.Telegram.Admins {
-		if id == v {
 			return true
 		}
 	}
@@ -156,6 +146,7 @@ func (a *application) init() {
 	log.Println("All checks passed…")
 }
 
+// Send message to admin on shutdown
 func (a *application) shutdown(reason string) {
 	a.Telegram.Client.SendMessage(
 		strconv.Itoa(a.Telegram.Admins[0]),
