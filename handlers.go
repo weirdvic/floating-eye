@@ -7,9 +7,6 @@ import (
 	"github.com/yanzay/tbot/v2"
 )
 
-// Regexp defining commands that could be sent to IRC bot
-const commandRegexp string = `^@(\?|v\?|V\?|d\?|e\?|g\?|b\?|l(\?|e\?|t\?)|s\?|u(\?|\+\?))\s*\S+`
-
 func timeStat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
 		start := time.Now()
