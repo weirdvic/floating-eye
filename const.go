@@ -1,7 +1,10 @@
 package main
+
+// commandRegexp defining commands that could be sent to IRC bot
+const commandRegexp string = `^@(\?|v\?|V\?|d\?|e\?|g\?|b\?|l(\?|e\?|t\?)|s\?|u(\?|\+\?))\s*\S+`
+
 // welcomeMessage contains greeting which is sent on /start and /help commands
-const welcomeMessage string =
-`This is a bot to query NetHack monsters stats.
+const welcomeMessage string = `This is a bot to query NetHack monsters stats.
 
 Available monster query commands are:
 @?[monster] or @v?[monster]:  NetHack 3.7
