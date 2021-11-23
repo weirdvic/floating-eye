@@ -1,4 +1,4 @@
-FROM arm64v8/golang AS build
+FROM golang AS build
 WORKDIR /src
 COPY *.go go.mod config.json ./
 RUN go mod tidy && go build -v -o /out/floating-eye .

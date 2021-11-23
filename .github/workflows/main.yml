@@ -9,7 +9,7 @@ env:
 
 jobs:
   build:
-    runs-on: marilith
+    runs-on: medusa
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker image
@@ -21,7 +21,7 @@ jobs:
         rm -f ./config.json
   
   deploy:
-    runs-on: marilith
+    runs-on: medusa
     needs: build
     steps:
     - name: Update running image
