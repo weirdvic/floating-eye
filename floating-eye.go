@@ -16,8 +16,8 @@ import (
 var (
 	app             application
 	workers         sync.WaitGroup
-	queryChannel    = make(chan botQuery, 100)
-	responseChannel = make(chan string, 100)
+	queryChannel    = make(chan botQuery)
+	responseChannel = make(chan string)
 )
 
 func init() {
