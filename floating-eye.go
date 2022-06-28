@@ -30,7 +30,7 @@ func init() {
 	app.Telegram.Client = tgBot.Client()
 
 	// Set middleware
-	tgBot.Use(timeStat)
+	// tgBot.Use(timeStat)
 
 	// Set start or help message handler
 	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
