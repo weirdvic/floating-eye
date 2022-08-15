@@ -16,7 +16,7 @@ import (
 var (
 	app             application
 	workers         sync.WaitGroup
-	queryChannel    = make(chan botQuery)
+	queryChannel    = make(chan botQuery) //
 	responseChannel = make(chan string)
 )
 
@@ -37,9 +37,12 @@ func init() {
 	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
 	// Set Beholder IRC bot handlers
-	tgBot.HandleMessage(`^!(scores|sb|players|who|variant)\s*$`, app.beholderHandler)
-	tgBot.HandleMessage(`^!(whereis|streak|role|race)\s*\w*\s*$`, app.beholderHandler)
-	tgBot.HandleMessage(`^!(lastgame|asc|lastasc)\s*\w*\s*\w*$`, app.beholderHandler)
+	tgBot.HandleMessage(
+		`^!(scores|sb|players|who|variant)\s*$`, app.beholderHandler)
+	tgBot.HandleMessage(
+		`^!(whereis|streak|role|race)\s*\w*\s*$`, app.beholderHandler)
+	tgBot.HandleMessage(
+		`^!(lastgame|asc|lastasc)\s*\w*\s*\w*$`, app.beholderHandler)
 	// Set !pom command handler
 	tgBot.HandleMessage(`(^/|^!)pom\.*`, app.pomHandler)
 

@@ -140,9 +140,11 @@ func (p *pomRequest) updateText() {
 	}
 }
 
-// updateImage runs xplanet command with provided arguments and returns an error if there any
+// updateImage runs xplanet command with provided arguments
+// and returns an error if there any
 func (p *pomRequest) updateImage() error {
-	args := []string{"-origin", "earth", "-body", "moon", "-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
+	args := []string{"-origin", "earth", "-body", "moon",
+		"-num_times", "1", "-output", "pom.jpg", "-geometry", "300x300"}
 	c := exec.Command("xplanet", args...)
 	return c.Run()
 }

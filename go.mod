@@ -1,6 +1,6 @@
 module github.com/weirdvic/floating-eye
 
-go 1.17
+go 1.18
 
 require (
 	github.com/yanzay/tbot/v2 v2.2.0

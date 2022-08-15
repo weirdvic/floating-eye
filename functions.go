@@ -79,8 +79,10 @@ func (a *application) checkBotName(item string) bool {
 // awaits for response from bot and sends the response text back to Telegram
 func queryWorker(c <-chan botQuery) {
 	// This regexp is used to filter IRC color codes from Pinoclone's response
-	colorFilter := regexp.MustCompile(`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
-	monsterNameFilter := regexp.MustCompile(`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
+	colorFilter := regexp.MustCompile(
+		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
+	monsterNameFilter := regexp.MustCompile(
+		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
 		// Read response from the channel
