@@ -1,32 +1,19 @@
-name: docker build
-
+name: get secrets
 on:
   push:
-    branches: [ main ]
-
-env:
-  REPO_NAME: ${{ github.event.repository.name }}
-
 jobs:
   build:
-    runs-on: medusa
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build Docker image
-      env:
-        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
+    - name: print secrets
       run: |
-        echo ${BOT_CONFIG} > ./config.json
-        docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
-        rm -f ./config.json
-  
-  deploy:
-    runs-on: medusa
-    needs: build
-    steps:
-    - name: Update running image
+        echo $BOT_CONFIG >> src/config.json
+        cat src/.env
       shell: bash
-      run: |
-        docker stop ${REPO_NAME}
-        docker rm ${REPO_NAME}
-        docker run --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
+      env:
+        BOT_CONFIG : ${{secrets.BOT_CONFIG}}
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+       name: BOT_CONFIG
+       path: src/config.json
