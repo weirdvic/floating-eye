@@ -7,7 +7,7 @@ jobs:
     steps:
     - name: save config
       run: |
-        echo $BOT_CONFIG >> ./src/config.json
+        echo $BOT_CONFIG > config.json
       shell: bash
       env:
         BOT_CONFIG : ${{secrets.BOT_CONFIG}}
@@ -15,4 +15,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
        name: BOT_CONFIG
-       path: ./src/config.json
+       path: config.json
