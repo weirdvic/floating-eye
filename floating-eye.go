@@ -45,6 +45,8 @@ func init() {
 		`^!(lastgame|asc|lastasc)\s*\w*\s*\w*$`, app.beholderHandler)
 	// Set !pom command handler
 	tgBot.HandleMessage(`(^/|^!)pom\.*`, app.pomHandler)
+	// Set !porn command handler
+	tgBot.HandleMessage(`(^/|^!)porn\.*`, app.pornHandler)
 
 	// Start the Telegram bot
 	log.Println("Connecting to Telegram…")
