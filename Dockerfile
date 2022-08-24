@@ -5,6 +5,7 @@ RUN go mod tidy && go build -v -o /out/floating-eye .
 FROM ubuntu AS prod
 WORKDIR /bot
 COPY monsters ./monsters
+COPY oglaf ./oglaf
 COPY xplanet ./xplanet
 RUN echo "Europe/Moscow" > /etc/timezone && \
     apt update && \
