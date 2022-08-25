@@ -62,6 +62,10 @@ func (a *application) pomHandler(m *tbot.Message) {
 }
 
 func (a *application) pornHandler(m *tbot.Message) {
+	if m.Chat.Type != "private" {
+		app.Telegram.Client.SendMessage(m.Chat.ID, "Sorry, no porn for you!")
+		return
+	}
 	// Check if "oglaf" directory exists
 	_, err := os.Stat("oglaf")
 	if os.IsNotExist(err) {
