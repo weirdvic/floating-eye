@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
@@ -144,6 +146,9 @@ func (a *application) init() {
 	if os.IsNotExist(err) {
 		log.Fatal("Monster images directory does not exist!")
 	}
+
+	// Initialize RNG
+	rand.Seed(time.Now().Unix())
 
 	log.Println("All checks passed…")
 }
