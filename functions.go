@@ -141,6 +141,9 @@ func (a *application) init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if app.Filters == nil {
+		app.Filters = make(map[string]*regexp.Regexp)
+	}
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(a.IRC.Bots)
