@@ -7,7 +7,7 @@
     "telegram": {
         "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",
         "admins": [00000000],
-        "forward_chat": "-111111111111"
+        "forward_chat": -1001234567890
     },
     "irc": {
         "server": "irc.libera.chat",
