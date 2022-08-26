@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -73,6 +74,8 @@ func init() {
 					Command: "PRIVMSG",
 					Params:  []string{"NickServ", app.IRC.Nick, app.IRC.Pass},
 				})
+				// Join channels
+				c.Write("JOIN #hardfought")
 			// Handle PING command
 			case m.Command == "PING":
 				c.Write("PONG")
@@ -81,6 +84,9 @@ func init() {
 				responseChannel <- m.Trailing()
 			default:
 				log.Println(m.Command, m.Params)
+				app.Telegram.Client.SendMessage(
+					strconv.Itoa(app.Telegram.Admins[0]),
+					fmt.Sprint(m.Command, m.Params))
 			}
 		},
 		),
