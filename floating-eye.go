@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 
@@ -84,9 +83,6 @@ func init() {
 				responseChannel <- m.Trailing()
 			default:
 				log.Println(m.Command, m.Params)
-				app.Telegram.Client.SendMessage(
-					strconv.Itoa(app.Telegram.Admins[0]),
-					fmt.Sprint(m.Command, m.Params))
 			}
 		},
 		),
