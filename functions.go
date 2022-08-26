@@ -19,6 +19,9 @@ import (
 )
 
 type application struct {
+	Config struct {
+		Players []string `json:"watch_players"`
+	} `json:"config"`
 	Telegram struct {
 		Client *tbot.Client
 		Token  string `json:"token"`
@@ -33,6 +36,7 @@ type application struct {
 		Name   string   `json:"name"`
 		Bots   []string `json:"bots"`
 	} `json:"irc"`
+	Filters map[string]*regexp.Regexp
 }
 
 type botQuery struct {
@@ -77,26 +81,34 @@ func (a *application) checkBotName(item string) bool {
 	return false
 }
 
+// parseChatMessage parses IRC message and if it's mentions one of the players,
+// forward that message to Telegram
+func (a *application) parseChatMessage(m string) {
+	if !app.Filters["mentions"].MatchString(m) {
+		return
+	} else {
+		app.Telegram.Client.SendMessage(
+			strconv.Itoa(app.Telegram.Admins[0]),
+			m,
+		)
+	}
+}
+
 // queryWorker reads from inboxChannel, passes the query text to IRC,
 // awaits for response from bot and sends the response text back to Telegram
 func queryWorker(c <-chan botQuery) {
-	// This regexp is used to filter IRC color codes from Pinoclone's response
-	colorFilter := regexp.MustCompile(
-		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
-	monsterNameFilter := regexp.MustCompile(
-		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
 		// Read response from the channel
 		botResponse := <-responseChannel
 		// Filter IRC color codes and replace parentheses to brackets
-		botResponse = colorFilter.ReplaceAllString(botResponse, "[ $1$2 ]")
+		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "[ $1$2 ]")
 		// Split response to lines by '|' symbol
 		botResponse = strings.ReplaceAll(botResponse, "|", "\n")
 		// In case we're working on monster query
 		if q.BotNick == "Pinoclone" {
 			// Parsing monster's name
-			monsterName, err := getMonsterName(monsterNameFilter, botResponse)
+			monsterName, err := getMonsterName(app.Filters["monsterName"], botResponse)
 			if err == nil {
 				fileName := fmt.Sprintf("monsters/%s.png", strings.ToUpper(monsterName))
 				// If monster's image is not available, set placeholder image
@@ -149,6 +161,19 @@ func (a *application) init() {
 
 	// Initialize RNG
 	rand.Seed(time.Now().Unix())
+
+	// This regexp is used to filter IRC color codes from Pinoclone's response
+	app.Filters["IRCcolors"] = regexp.MustCompile(
+		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
+	app.Filters["monsterName"] = regexp.MustCompile(
+		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
+
+	// Construct regexp to find messages that mention players
+	app.Filters["mentions"] = regexp.MustCompile(
+		fmt.Sprint(
+			`^.*\]\s(`,
+			strings.Join(app.Config.Players, `|`),
+			`)\s\(.*$`))
 
 	log.Println("All checks passed…")
 }
