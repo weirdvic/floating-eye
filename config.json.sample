@@ -1,7 +1,13 @@
 {
+    "config": {
+        "watch_players": [
+            "wvc",
+        ]
+    },
     "telegram": {
-        "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",  
-        "admins": [00000000]
+        "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi",
+        "admins": [00000000],
+        "forward_chat": "-111111111111"
     },
     "irc": {
         "server": "irc.libera.chat",

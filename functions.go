@@ -23,9 +23,10 @@ type application struct {
 		Players []string `json:"watch_players"`
 	} `json:"config"`
 	Telegram struct {
-		Client *tbot.Client
-		Token  string `json:"token"`
-		Admins []int  `json:"admins"`
+		Client      *tbot.Client
+		Token       string `json:"token"`
+		Admins      []int  `json:"admins"`
+		ForwardChat int    `json:"forward_chat"`
 	} `json:"telegram"`
 	IRC struct {
 		Client *irc.Client
@@ -88,7 +89,7 @@ func (a *application) parseChatMessage(m string) {
 		return
 	} else {
 		app.Telegram.Client.SendMessage(
-			strconv.Itoa(app.Telegram.Admins[0]),
+			strconv.Itoa(app.Telegram.ForwardChat),
 			m,
 		)
 	}
