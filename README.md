@@ -10,3 +10,13 @@
 Также бот пересылает сообщения от бота `Beholder` в IRC канале `#hardfought`, в которых упоминаются русскоязычные игроки. Список отслеживаемых игроков задаётся массивом строк `watch_players` в файле `config.json`
 
 Действующий экземпляр бота доступен в Telegram как [__@floatingeye_bot__](https://t.me/floatingeye_bot)
+## Список отслеживаемых игроков на HDF:
+
+- wvc
+- lacca
+- maxlunar
+- MaxLunar
+- engelson
+- liferooter
+- nazult
+- yen0
