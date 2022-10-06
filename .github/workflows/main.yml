@@ -6,6 +6,7 @@ on:
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
+  CONFIG_PATH: ${{ secrets.CONFIG_PATH }}
 
 jobs:
   build:
@@ -13,12 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker image
-      env:
-        BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
       run: |
-        echo ${BOT_CONFIG} > ./config.json
-        docker build . --no-cache --file Dockerfile --tag ${REPO_NAME}
-        rm -f ./config.json
+        docker build --tag ${REPO_NAME} .
 
   deploy:
     runs-on: self-hosted
@@ -27,6 +24,7 @@ jobs:
     - name: Update running image
       shell: bash
       run: |
-        docker stop ${REPO_NAME}
-        docker rm ${REPO_NAME}
-        docker run --detach --restart=always --name=${REPO_NAME} ${REPO_NAME}
+        docker stop ${REPO_NAME} || true
+        docker rm ${REPO_NAME} || true
+        docker run --name=${REPO_NAME} --detach --restart=always \
+        -v ${CONFIG_PATH}:/bot/config.json ${REPO_NAME}

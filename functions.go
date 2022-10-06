@@ -45,11 +45,6 @@ type botQuery struct {
 	Query   *tbot.Message
 }
 
-var (
-	//go:embed config.json
-	configFile []byte
-)
-
 // askBot is a simple wrapper to send message to the IRC bot
 func askBot(nick, text string) {
 	app.IRC.Client.WriteMessage(&irc.Message{
@@ -121,7 +116,11 @@ func queryWorker(c <-chan botQuery) {
 				app.Telegram.Client.SendPhotoFile(
 					q.Query.Chat.ID,
 					fileName,
-					tbot.OptCaption(botResponse),
+					tbot.OptCaption(
+						strings.Join([]string{botResponse,
+							"https://nethackwiki.com/" + strings.Title(strings.ToLower(monsterName))},
+							"\n"),
+					),
 					tbot.OptReplyToMessageID(q.Query.MessageID),
 				)
 			} else {
@@ -137,8 +136,17 @@ func queryWorker(c <-chan botQuery) {
 
 // readConfig decodes embedded config.json file to struct
 func (a *application) init() {
-	// Decode embedded config file to app struct
-	err := json.Unmarshal(configFile, a)
+	// Check if config.json file exists
+	_, err := os.Stat("config.json")
+	if os.IsNotExist(err) {
+		log.Fatal("config.json file does not exist!")
+	}
+	configFile, err := os.ReadFile("config.json")
+	if err != nil {
+		log.Fatal("Could not read config.json!")
+	}
+	// Decode config.json file to app struct
+	err = json.Unmarshal(configFile, a)
 	if err != nil {
 		log.Fatal(err)
 	}

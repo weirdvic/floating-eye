@@ -11,19 +11,6 @@ import (
 	"github.com/yanzay/tbot/v2"
 )
 
-func timeStat(h tbot.UpdateHandler) tbot.UpdateHandler {
-	return func(u *tbot.Update) {
-		start := time.Now()
-		h(u)
-		log.Printf("User is: %d\t%s %s %s",
-			u.Message.From.ID,
-			u.Message.From.Username,
-			u.Message.From.FirstName,
-			u.Message.From.LastName)
-		log.Printf("Handle time: %v", time.Since(start))
-	}
-}
-
 // Handler for /start command
 func (a *application) startHandler(m *tbot.Message) {
 	// WELCOME_MESSAGE is defined in const.go
