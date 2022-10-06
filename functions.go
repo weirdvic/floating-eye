@@ -118,7 +118,9 @@ func queryWorker(c <-chan botQuery) {
 					fileName,
 					tbot.OptCaption(
 						strings.Join([]string{botResponse,
-							"https://nethackwiki.com/" + strings.Title(strings.ToLower(monsterName))},
+							"https://nethackwiki.com/" + strings.Title(
+								strings.ToLower(
+									strings.ReplaceAll(monsterName, " ", "_")))},
 							"\n"),
 					),
 					tbot.OptReplyToMessageID(q.Query.MessageID),
