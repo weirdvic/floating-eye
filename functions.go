@@ -85,7 +85,7 @@ func (a *application) parseChatMessage(m string) {
 	} else {
 		app.Telegram.Client.SendMessage(
 			strconv.Itoa(app.Telegram.ForwardChat),
-			m,
+			app.Filters["TGannounce"].ReplaceAllString(m, "[$1]"),
 		)
 	}
 }
@@ -179,6 +179,8 @@ func (a *application) init() {
 	// This regexp is used to filter IRC color codes from Pinoclone's response
 	app.Filters["IRCcolors"] = regexp.MustCompile(
 		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
+	app.Filters["TGannounce"] = regexp.MustCompile(
+		`\[\d{1,2}(\S+)\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
 		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
 
