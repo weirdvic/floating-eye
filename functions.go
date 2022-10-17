@@ -180,7 +180,7 @@ func (a *application) init() {
 	app.Filters["IRCcolors"] = regexp.MustCompile(
 		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
 	app.Filters["TGannounce"] = regexp.MustCompile(
-		`\[\d{1,2}(\S+)\]`)
+		`\[\s*\d{1,2}(\S+)\s*\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
 		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
 
