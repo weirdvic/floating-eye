@@ -83,9 +83,10 @@ func (a *application) parseChatMessage(m string) {
 	if !app.Filters["mentions"].MatchString(m) {
 		return
 	} else {
+		message := app.Filters["TGannounce"].ReplaceAllString(m, `[$1]`)
 		app.Telegram.Client.SendMessage(
 			strconv.Itoa(app.Telegram.ForwardChat),
-			app.Filters["TGannounce"].ReplaceAllString(m, `[$1]`),
+			message,
 		)
 	}
 }
