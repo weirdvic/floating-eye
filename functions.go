@@ -85,7 +85,7 @@ func (a *application) parseChatMessage(m string) {
 	} else {
 		app.Telegram.Client.SendMessage(
 			strconv.Itoa(app.Telegram.ForwardChat),
-			app.Filters["TGannounce"].ReplaceAllString(m, "[$1]"),
+			app.Filters["TGannounce"].ReplaceAllString(m, `[$1]`),
 		)
 	}
 }
@@ -98,7 +98,7 @@ func queryWorker(c <-chan botQuery) {
 		// Read response from the channel
 		botResponse := <-responseChannel
 		// Filter IRC color codes and replace parentheses to brackets
-		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "[ $1$2 ]")
+		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, `[$1$2]`)
 		// Split response to lines by '|' symbol
 		botResponse = strings.ReplaceAll(botResponse, "|", "\n")
 		// In case we're working on monster query
@@ -180,7 +180,7 @@ func (a *application) init() {
 	app.Filters["IRCcolors"] = regexp.MustCompile(
 		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
 	app.Filters["TGannounce"] = regexp.MustCompile(
-		`\[\s*\d{1,2}(\S+)\s*\]`)
+		`\[\s*\d{1,2}([a-z|-]+)\s*\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
 		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
 
