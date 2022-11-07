@@ -187,7 +187,7 @@ func (a *application) init() {
 	// Construct regexp to find messages that mention players
 	app.Filters["mentions"] = regexp.MustCompile(
 		fmt.Sprint(
-			`^.*\]\s(`,
+			`^.*\]:?\s(`,
 			strings.Join(app.Config.Players, `|`),
 			`)\s\(.*$`))
 
