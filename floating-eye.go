@@ -74,14 +74,14 @@ func init() {
 					Params:  []string{"NickServ", app.IRC.Nick, app.IRC.Pass},
 				})
 				// Join channels
-				c.Write("JOIN #hardfought")
+				c.Write("JOIN #hardfought,#tnnt")
 			// Handle PING command
 			case m.Command == "PING":
 				c.Write("PONG")
 			// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
 			case m.Command == "PRIVMSG" && app.checkBotName(m.Name) && !c.FromChannel(m):
 				responseChannel <- m.Trailing()
-			case m.Command == "PRIVMSG" && m.Name == "Beholder" && c.FromChannel(m):
+			case m.Command == "PRIVMSG" && c.FromChannel(m) && (m.Name == "Beholder" || m.Name == "Croesus"):
 				app.parseChatMessage(m.Trailing())
 			default:
 				log.Println(m.Command, m.Params)
