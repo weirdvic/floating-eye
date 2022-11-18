@@ -85,7 +85,7 @@ func (a *application) parseChatMessage(m string) {
 	} else {
 		app.Telegram.Client.SendMessage(
 			strconv.Itoa(app.Telegram.ForwardChat),
-			app.Filters["TGannounce"].ReplaceAllString(m, `[ $1 ]`),
+			app.Filters["TGannounce"].ReplaceAllString(m, `[$1]`),
 		)
 	}
 }

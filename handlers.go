@@ -1,11 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"math/rand"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/yanzay/tbot/v2"
@@ -46,28 +41,4 @@ func (a *application) pomHandler(m *tbot.Message) {
 	}
 	// Send the image back to Telegram with pom.Text as a caption
 	app.Telegram.Client.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(PoM.Text))
-}
-
-func (a *application) pornHandler(m *tbot.Message) {
-	if m.Chat.Type != "private" {
-		app.Telegram.Client.SendMessage(m.Chat.ID, "Sorry, no porn for you!")
-		return
-	}
-	// Check if "oglaf" directory exists
-	_, err := os.Stat("oglaf")
-	if os.IsNotExist(err) {
-		log.Print("Oglaf images directory does not exist!")
-		app.Telegram.Client.SendMessage(m.Chat.ID, "No porn for you!")
-	}
-	// Determine how many images in "oglaf" directory
-	pattern := filepath.Join("oglaf", "*.png")
-	pngList, err := filepath.Glob(pattern)
-	if err != nil {
-		log.Print("Files error:", err)
-	}
-	oglafPicNum := rand.Intn(len(pngList))
-	app.Telegram.Client.SendPhotoFile(
-		m.Chat.ID,
-		filepath.Join("oglaf", fmt.Sprintf("%d.png", oglafPicNum)),
-		tbot.OptCaption(fmt.Sprintf("Oglaf pic %d from %d", oglafPicNum, len(pngList))))
 }
