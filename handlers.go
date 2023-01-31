@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/yanzay/tbot/v2"
@@ -10,6 +12,18 @@ import (
 func (a *application) startHandler(m *tbot.Message) {
 	// WELCOME_MESSAGE is defined in const.go
 	a.Telegram.Client.SendMessage(m.Chat.ID, welcomeMessage)
+}
+
+// Handler for /announce command
+func (a *application) announceHandler(m *tbot.Message) {
+	// Only admin can make announces
+	if m.Chat.ID == strconv.Itoa(a.Telegram.Admins[0]) {
+		a.Telegram.Client.SendMessage(
+			strconv.Itoa(a.Telegram.ForwardChat),
+			strings.TrimPrefix(m.Text, "/announce "))
+	} else {
+		a.Telegram.Client.SendMessage(m.Chat.ID, "You can't handle my potions, traveller…")
+	}
 }
 
 // Handler for commands related to IRC Pinobot
