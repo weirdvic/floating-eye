@@ -31,6 +31,8 @@ func init() {
 
 	// Set start or help message handler
 	tgBot.HandleMessage(`^/(start|help)$`, app.startHandler)
+	// Set announce handler
+	tgBot.HandleMessage(`^/announce\s\S+`, app.announceHandler)
 	// Set Pinobot IRC bot handlers
 	tgBot.HandleMessage(commandRegexp, app.pinobotHandler)
 	// Set Beholder IRC bot handlers
