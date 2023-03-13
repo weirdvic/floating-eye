@@ -56,3 +56,8 @@ func (a *application) pomHandler(m *tbot.Message) {
 	// Send the image back to Telegram with pom.Text as a caption
 	app.Telegram.Client.SendPhotoFile(m.Chat.ID, "pom.jpg", tbot.OptCaption(PoM.Text))
 }
+
+// Handler for !orcname command
+func (a *application) orcnameHandler(m *tbot.Message) {
+	a.Telegram.Client.SendMessage(m.Chat.ID, strings.Title(makeOrcName()))
+}

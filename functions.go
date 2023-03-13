@@ -174,7 +174,7 @@ func (a *application) init() {
 	}
 
 	// Initialize RNG
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 
 	// This regexp is used to filter IRC color codes from Pinoclone's response
 	app.Filters["IRCcolors"] = regexp.MustCompile(
@@ -200,4 +200,26 @@ func (a *application) shutdown(reason string) {
 		strconv.Itoa(a.Telegram.Admins[0]),
 		fmt.Sprintf("Shutting down on: %s", reason))
 	a.IRC.Client.Write("QUIT")
+}
+
+func makeOrcName() string {
+	var s string
+	v := [...]string{"a", "ai", "og", "u"}
+	snd := [...]string{"gor", "gris", "un", "bane", "ruk", "oth", "ul", "z", "thos", "akh", "hai"}
+
+	iend := rand.Intn(2) + 3
+	vstart := rand.Intn(2)
+
+	for i := 0; i < iend; i++ {
+		vstart += -1 /* 0 -> 1, 1 -> 0 */
+		if i > 0 && rand.Intn(30) == 0 {
+			s += "-"
+		}
+		if vstart == 1 {
+			s += v[rand.Intn(len(v))]
+		} else {
+			s += snd[rand.Intn(len(snd))]
+		}
+	}
+	return s
 }

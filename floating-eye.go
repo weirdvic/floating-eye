@@ -44,6 +44,8 @@ func init() {
 		`^!(lastgame|asc|lastasc)\s*\w*\s*\w*$`, app.beholderHandler)
 	// Set !pom command handler
 	tgBot.HandleMessage(`(^/|^!)pom\.*`, app.pomHandler)
+	// Set !orcname command handler
+	tgBot.HandleMessage(`(^/|^!)orcname\.*`, app.orcnameHandler)
 
 	// Start the Telegram bot
 	log.Println("Connecting to Telegram…")
