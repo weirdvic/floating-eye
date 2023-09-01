@@ -46,6 +46,8 @@ func init() {
 	tgBot.HandleMessage(`(^/|^!)pom\.*`, app.pomHandler)
 	// Set !orcname command handler
 	tgBot.HandleMessage(`(^/|^!)orcname\.*`, app.orcnameHandler)
+	// Set !quaff command handler
+	tgBot.HandleMessage(`(^/|^!)(quaff|drink|živeli)\.*`, app.quaffHandler)
 
 	// Start the Telegram bot
 	log.Println("Connecting to Telegram…")
@@ -97,7 +99,7 @@ func init() {
 	app.IRC.Client = irc.NewClient(conn, config)
 
 	// Send /QUIT to IRC on SIGTERM
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func(a *application) {
 		<-c

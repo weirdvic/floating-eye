@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/mroth/weightedrand/v2"
 	"github.com/yanzay/tbot/v2"
 	"gopkg.in/irc.v3"
 )
@@ -38,6 +38,7 @@ type application struct {
 		Bots   []string `json:"bots"`
 	} `json:"irc"`
 	Filters map[string]*regexp.Regexp
+	Potions map[string]string
 }
 
 type botQuery struct {
@@ -152,9 +153,16 @@ func (a *application) init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Init filters
 	if app.Filters == nil {
 		app.Filters = make(map[string]*regexp.Regexp)
 	}
+
+	// Brewing potions
+	if app.Potions == nil {
+		app.Potions = brewPotions()
+	}
+
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(a.IRC.Bots)
@@ -172,9 +180,6 @@ func (a *application) init() {
 	if os.IsNotExist(err) {
 		log.Fatal("Monster images directory does not exist!")
 	}
-
-	// Initialize RNG
-	rand.Seed(time.Now().UnixNano())
 
 	// This regexp is used to filter IRC color codes from Pinoclone's response
 	app.Filters["IRCcolors"] = regexp.MustCompile(
@@ -222,4 +227,72 @@ func makeOrcName() string {
 		}
 	}
 	return s
+}
+
+// brewPotions returns a map of potion effects to randomized appearances
+func brewPotions() map[string]string {
+	effects := []string{
+		"booze", "fruit juice", "see invisible", "sickness", "confusion",
+		"extra healing", "hallucination", "healing", "restore ability", "sleeping",
+		"blindness", "gain energy", "invisibility", "monster detection", "object detection",
+		"enlightenment", "full healing", "levitation", "polymorph", "speed",
+		"acid", "oil", "gain ability", "gain level", "paralysis",
+	}
+	appearances := []string{
+		"ruby", "pink", "orange", "yellow", "emerald",
+		"dark green", "cyan", "sky blue", "brilliant blue", "magenta",
+		"purple-red", "puce", "milky", "swirly", "bubbly",
+		"smoky", "cloudy", "effervescent", "black", "golden",
+		"brown", "fizzy", "dark", "white", "murky",
+	}
+	rand.Shuffle(
+		len(appearances),
+		func(i, j int) { appearances[i], appearances[j] = appearances[j], appearances[i] },
+	)
+
+	potions := make(map[string]string)
+	potions["water"] = "clear"
+	potions["holy water"] = "clear"
+	potions["unholy water"] = "clear"
+
+	for i, effect := range effects {
+		potions[effect] = appearances[i]
+	}
+	return potions
+}
+
+// pickPotion returns a random potion effect
+func pickPotion() string {
+	potionSeller, _ := weightedrand.NewChooser(
+		weightedrand.NewChoice("water", 690),
+		weightedrand.NewChoice("holy water", 115),
+		weightedrand.NewChoice("unholy water", 115),
+		weightedrand.NewChoice("booze", 420),
+		weightedrand.NewChoice("fruit juice", 420),
+		weightedrand.NewChoice("see invisible", 420),
+		weightedrand.NewChoice("sickness", 420),
+		weightedrand.NewChoice("confusion", 420),
+		weightedrand.NewChoice("extra healing", 470),
+		weightedrand.NewChoice("hallucination", 400),
+		weightedrand.NewChoice("healing", 570),
+		weightedrand.NewChoice("restore ability", 400),
+		weightedrand.NewChoice("sleeping", 420),
+		weightedrand.NewChoice("blindness", 400),
+		weightedrand.NewChoice("gain energy", 420),
+		weightedrand.NewChoice("invisibility", 400),
+		weightedrand.NewChoice("monster detection", 400),
+		weightedrand.NewChoice("object detection", 420),
+		weightedrand.NewChoice("enlightenment", 200),
+		weightedrand.NewChoice("full healing", 100),
+		weightedrand.NewChoice("levitation", 420),
+		weightedrand.NewChoice("polymorph", 100),
+		weightedrand.NewChoice("speed", 420),
+		weightedrand.NewChoice("acid", 100),
+		weightedrand.NewChoice("oil", 300),
+		weightedrand.NewChoice("gain ability", 420),
+		weightedrand.NewChoice("gain level", 200),
+		weightedrand.NewChoice("paralysis", 420),
+		weightedrand.NewChoice("nothing", 1),
+	)
+	return potionSeller.Pick()
 }
