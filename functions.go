@@ -119,7 +119,7 @@ func queryWorker(c <-chan botQuery) {
 					fileName,
 					tbot.OptCaption(
 						strings.Join([]string{botResponse,
-							"https://nethackwiki.com/" + strings.Title(
+							"https://nethackwiki.com/wiki/" + strings.Title(
 								strings.ToLower(
 									strings.ReplaceAll(monsterName, " ", "_")))},
 							"\n"),
