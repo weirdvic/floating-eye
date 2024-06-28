@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build Docker image
       run: |
-        docker build --tag ${REPO_NAME} .
+        podman build --tag ${REPO_NAME} .
 
   deploy:
     runs-on: self-hosted
@@ -24,7 +24,11 @@ jobs:
     - name: Update running image
       shell: bash
       run: |
-        docker stop ${REPO_NAME} || true
-        docker rm ${REPO_NAME} || true
-        docker run --name=${REPO_NAME} --detach --restart=always \
-        -v ${CONFIG_PATH}:/bot/config.json ${REPO_NAME}
+        podman stop ${REPO_NAME} || true
+        podman rm ${REPO_NAME} || true
+        podman run --name=${REPO_NAME} \
+               --detach \
+               --log-opt max-size=10mb \
+               --restart=always \
+               -v ${CONFIG_PATH}:/bot/config.json \
+               ${REPO_NAME}
