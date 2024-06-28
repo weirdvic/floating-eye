@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/yanzay/tbot/v2"
-	"gopkg.in/irc.v3"
+	"gopkg.in/irc.v4"
 )
 
 var (

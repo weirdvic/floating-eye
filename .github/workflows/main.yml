@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: marilith
     steps:
     - uses: actions/checkout@v4
     - name: Build Podman image
@@ -24,8 +24,6 @@ jobs:
     - name: Update running container
       shell: bash
       run: |
-        podman stop ${REPO_NAME} || true
-        podman rm ${REPO_NAME} || true
         podman run --name=${REPO_NAME} \
                --detach --replace \
                --log-opt max-size=10mb \
