@@ -1,4 +1,4 @@
-name: docker build
+name: Podman build
 
 on:
   push:
@@ -12,8 +12,8 @@ jobs:
   build:
     runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v2
-    - name: Build Docker image
+    - uses: actions/checkout@v4
+    - name: Build Podman image
       run: |
         podman build --tag ${REPO_NAME} .
 
@@ -21,14 +21,14 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
-    - name: Update running image
+    - name: Update running container
       shell: bash
       run: |
         podman stop ${REPO_NAME} || true
         podman rm ${REPO_NAME} || true
         podman run --name=${REPO_NAME} \
-               --detach \
+               --detach --replace \
                --log-opt max-size=10mb \
                --restart=always \
-               -v ${CONFIG_PATH}:/bot/config.json \
+               -v ${CONFIG_PATH}:/bot/config.json:Z \
                ${REPO_NAME}
