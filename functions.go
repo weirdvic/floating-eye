@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -37,13 +39,21 @@ type application struct {
 		Name   string   `json:"name"`
 		Bots   []string `json:"bots"`
 	} `json:"irc"`
-	Filters map[string]*regexp.Regexp
-	Potions map[string]string
+	Filters     map[string]*regexp.Regexp
+	Potions     map[string]string
+	WebhookURL  string `json:"webhook_url"`
+	WebhookAuth string `json:"webhook_auth"`
 }
 
 type botQuery struct {
 	BotNick string
 	Query   *tbot.Message
+}
+
+type webhook struct {
+	ChatID   string `json:"chat_id"`
+	UserName string `json:"username"`
+	Message  string `json:"message"`
 }
 
 // askBot is a simple wrapper to send message to the IRC bot
@@ -295,4 +305,45 @@ func pickPotion() string {
 		weightedrand.NewChoice("nothing", 1),
 	)
 	return potionSeller.Pick()
+}
+
+// sendWebhook sends a webhook to specified URL
+func sendWebhook(endpoint, auth string, p webhook) {
+	pb, err := json.Marshal(p)
+	if err != nil {
+		log.Printf("Error marshalling payload: %v\n", err)
+		return
+	}
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(pb))
+	if err != nil {
+		log.Printf("Error creating request: %v\n", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", auth))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error sending request %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to send webhook: %d\n", resp.StatusCode)
+	}
+}
+
+// stat is a middleware to send webhooks on every update
+func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
+	return func(u *tbot.Update) {
+		payload := webhook{
+			u.Message.Chat.ID,
+			u.Message.From.Username,
+			u.Message.Text,
+		}
+		h(u)
+		sendWebhook(app.WebhookURL, app.WebhookAuth, payload)
+	}
 }

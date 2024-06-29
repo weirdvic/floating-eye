@@ -16,5 +16,7 @@
         "pass": "bot_pass",
         "name": "Bot Username",
         "bots": ["Pinoclone", "Beholder"]
-    }
+    },
+    "webhook_url": "https://example.org/endpoint",
+    "webhook_url": "webhook_authorization_token"
 }
