@@ -320,7 +320,7 @@ func sendWebhook(endpoint, auth string, p webhook) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", auth))
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

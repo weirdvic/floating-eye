@@ -24,9 +24,10 @@ jobs:
     - name: Update running container
       shell: bash
       run: |
+        podman stop ${REPO_NAME}
+        podman rm --force ${REPO_NAME}
         podman run --name=${REPO_NAME} \
-               --detach --replace \
-               --log-opt max-size=10mb \
+               --detach \
                --restart=always \
                -v ${CONFIG_PATH}:/bot/config.json:Z \
                ${REPO_NAME}
