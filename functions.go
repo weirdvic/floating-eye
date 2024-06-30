@@ -338,12 +338,14 @@ func sendWebhook(endpoint, auth string, p webhook) {
 // stat is a middleware to send webhooks on every update
 func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
-		payload := webhook{
-			u.Message.Chat.ID,
-			u.Message.From.Username,
-			u.Message.Text,
-		}
 		h(u)
-		sendWebhook(app.WebhookURL, app.WebhookAuth, payload)
+		if u.Message.Chat.Type == "private" {
+			payload := webhook{
+				u.Message.Chat.ID,
+				u.Message.From.Username,
+				u.Message.Text,
+			}
+			sendWebhook(app.WebhookURL, app.WebhookAuth, payload)
+		}
 	}
 }

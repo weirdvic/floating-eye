@@ -9,5 +9,6 @@ ENV TZ=${TZ}
 RUN zypper -qn install -y bsd-games ca-certificates xplanet
 COPY xplanet ./xplanet
 COPY monsters ./monsters
+COPY config.json .
 COPY --from=build /out/floating-eye .
 CMD ["/bot/floating-eye"]

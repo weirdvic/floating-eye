@@ -6,7 +6,7 @@ on:
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
-  CONFIG_PATH: ${{ secrets.CONFIG_PATH }}
+  BOT_CONFIG: ${{ secrets.BOT_CONFIG }}
 
 jobs:
   build:
@@ -15,6 +15,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build Podman image
       run: |
+        echo "${BOT_CONFIG}" > config.json
         podman build --tag ${REPO_NAME} .
 
   deploy:
@@ -27,5 +28,4 @@ jobs:
         podman run --name=${REPO_NAME} \
                --detach --replace \
                --restart=always \
-               -v ${CONFIG_PATH}:/bot/config.json \
                ${REPO_NAME}
