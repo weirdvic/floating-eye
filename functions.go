@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mroth/weightedrand/v2"
 	"github.com/yanzay/tbot/v2"
@@ -56,14 +57,18 @@ type webhook struct {
 	Message  string `json:"message"`
 }
 
-// askBot is a simple wrapper to send message to the IRC bot
+// askBot sends a private message to specified IRC bot with the given text. It's
+// used to query the bot about NetHack monsters and other game-related info.
 func askBot(nick, text string) {
 	app.IRC.Client.WriteMessage(&irc.Message{
 		Command: "PRIVMSG",
 		Params:  []string{nick, text}})
 }
 
-// getMonsterName parses string to extract monster's name
+// getMonsterName extracts a monster name from a given string using a regular
+// expression. It returns the monster name and an error if the string does not
+// contain a monster name. If the string contains a monster name it returns the
+// name and nil.
 func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 	if !r.MatchString(s) {
 		return "", errors.New("provided string does not contain a monster name")
@@ -101,13 +106,32 @@ func (a *application) parseChatMessage(m string) {
 	}
 }
 
-// queryWorker reads from inboxChannel, passes the query text to IRC,
-// awaits for response from bot and sends the response text back to Telegram
+// gatherBotResponses reads from the responseChannel and concatenates all messages
+// into one string until a 500ms timeout is reached. The purpose of this function
+// is to allow IRC bots to send multiple lines of text in response to a query, and
+// have the entire response forwarded to Telegram.
+func gatherBotResponses(responseChannel <-chan string) string {
+	var botResponse string
+	timeout := time.After(200 * time.Millisecond) // Set a timeout for reading responses
+	for {
+		select {
+		case msg := <-responseChannel:
+			botResponse += msg + " " // Concatenate each message with a space or newline
+		case <-timeout:
+			return botResponse // Return when the timeout is reached
+		}
+	}
+}
+
+// queryWorker reads from the query channel and sends a query to the IRC bot
+// with the corresponding nickname. After that, it reads the response from the
+// response channel and sends the response to Telegram. If the query was about a
+// monster, it also sends the monster's image if it is available.
 func queryWorker(c <-chan botQuery) {
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
 		// Read response from the channel
-		botResponse := <-responseChannel
+		botResponse := gatherBotResponses(responseChannel)
 		// Filter IRC color codes and replace parentheses to brackets
 		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "")
 		// Split response to lines by '|' symbol
@@ -209,7 +233,8 @@ func (a *application) init() {
 	log.Println("All checks passed…")
 }
 
-// Send message to admin on shutdown
+// shutdown sends a message to the Telegram admin about the shutdown
+// and sends "QUIT" command to the IRC server.
 func (a *application) shutdown(reason string) {
 	a.Telegram.Client.SendMessage(
 		strconv.Itoa(a.Telegram.Admins[0]),
@@ -217,6 +242,10 @@ func (a *application) shutdown(reason string) {
 	a.IRC.Client.Write("QUIT")
 }
 
+// makeOrcName generates a random Orc name in the style of NetHack.
+// It produces a string of 3-5 characters, with a dash in the middle with 1/30 probability.
+// The first and last parts of the name are chosen from a list of 4 options,
+// and the second part is chosen from a list of 11 options.
 func makeOrcName() string {
 	var s string
 	v := [...]string{"a", "ai", "og", "u"}
@@ -239,7 +268,9 @@ func makeOrcName() string {
 	return s
 }
 
-// brewPotions returns a map of potion effects to randomized appearances
+// brewPotions returns a map of all 20 possible potion effects to their colors.
+// The map is shuffled on each call, so the colors will be different each time.
+// This is a port of the NetHack potion initialization code.
 func brewPotions() map[string]string {
 	effects := []string{
 		"booze", "fruit juice", "see invisible", "sickness", "confusion",
@@ -271,7 +302,9 @@ func brewPotions() map[string]string {
 	return potions
 }
 
-// pickPotion returns a random potion effect
+// pickPotion returns a random potion name from the list of all possible
+// potion effects, weighted according to the NetHack probability table.
+// The returned string is the name of the potion effect, not the color.
 func pickPotion() string {
 	potionSeller, _ := weightedrand.NewChooser(
 		weightedrand.NewChoice("water", 690),
@@ -307,7 +340,9 @@ func pickPotion() string {
 	return potionSeller.Pick()
 }
 
-// sendWebhook sends a webhook to specified URL
+// sendWebhook sends a webhook request to the specified endpoint with the
+// given webhook payload and authentication token. It will log any errors
+// that occur during the request, and will not retry on failure.
 func sendWebhook(endpoint, auth string, p webhook) {
 	pb, err := json.Marshal(p)
 	if err != nil {
@@ -335,7 +370,9 @@ func sendWebhook(endpoint, auth string, p webhook) {
 	}
 }
 
-// stat is a middleware to send webhooks on every update
+// stat is a middleware function for a Telegram bot that intercepts updates and,
+// if the message is from a private chat, sends the message details to a specified
+// webhook URL. It forwards the update to the next handler in the chain by calling h(u).
 func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
 	return func(u *tbot.Update) {
 		h(u)

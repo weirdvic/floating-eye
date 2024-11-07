@@ -16,7 +16,7 @@ jobs:
     - name: Build Podman image
       run: |
         echo "${BOT_CONFIG}" > config.json
-        podman build --tag ${REPO_NAME} .
+        podman build --tag ${REPO_NAME}:latest .
 
   deploy:
     runs-on: self-hosted
@@ -28,4 +28,4 @@ jobs:
         podman run --name=${REPO_NAME} \
                --detach --replace \
                --restart=always \
-               localhost/${REPO_NAME}:latest
+               ${REPO_NAME}:latest
