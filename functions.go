@@ -109,7 +109,7 @@ func queryWorker(c <-chan botQuery) {
 		// Read response from the channel
 		botResponse := <-responseChannel
 		// Filter IRC color codes and replace parentheses to brackets
-		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, `[ $2 ]`)
+		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "")
 		// Split response to lines by '|' symbol
 		botResponse = strings.ReplaceAll(botResponse, "|", "\n")
 		// In case we're working on monster query
@@ -193,7 +193,7 @@ func (a *application) init() {
 
 	// This regexp is used to filter IRC color codes from Pinoclone's response
 	app.Filters["IRCcolors"] = regexp.MustCompile(
-		`\(.*\d{1,2},\d{1,2}(\S).*\)|\[\s+\d{1,2}(\S+)\s+\]`)
+		`\x03(\d{1,2}(,\d{1,2})?)?|[\x02\x1D\x1F\x16\x0F]`)
 	app.Filters["TGannounce"] = regexp.MustCompile(
 		`\[\D*\d{1,2}([a-zA-Z|-]+)\D*\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
