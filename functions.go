@@ -109,7 +109,7 @@ func queryWorker(c <-chan botQuery) {
 		// Read response from the channel
 		botResponse := <-responseChannel
 		// Filter IRC color codes and replace parentheses to brackets
-		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, `[ $1$2 ]`)
+		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, `[ $2 ]`)
 		// Split response to lines by '|' symbol
 		botResponse = strings.ReplaceAll(botResponse, "|", "\n")
 		// In case we're working on monster query
