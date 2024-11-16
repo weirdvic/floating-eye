@@ -73,13 +73,10 @@ func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 		return "", errors.New("provided string does not contain a monster name")
 	}
 	match := r.FindStringSubmatch(s)
-	if match[2] == "" {
-		name = match[1]
-		return name, nil
+	if len(match) < 2 {
+		return "", errors.New("provided string does not contain a monster name")
 	}
-	// else
-	name = match[2]
-	return name, nil
+	return match[1], nil
 }
 
 // checkBotName checks if bot name is in allowed list
@@ -203,7 +200,7 @@ func (a *application) init() {
 	app.Filters["TGannounce"] = regexp.MustCompile(
 		`\[\D*\d{1,2}([a-zA-Z|-]+)\D*\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
-		`^([\w+\s+-]+)\s\[|~\d+~\s([\w+\s+-]+)\s\[`)
+		`^(\w+)\s?\(\S\)`)
 
 	// Construct regexp to find messages that mention players
 	app.Filters["mentions"] = regexp.MustCompile(
