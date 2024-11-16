@@ -14,7 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mroth/weightedrand/v2"
 	"github.com/yanzay/tbot/v2"
@@ -106,23 +105,6 @@ func (a *application) parseChatMessage(m string) {
 	}
 }
 
-// gatherBotResponses reads from the responseChannel and concatenates all messages
-// into one string until a 500ms timeout is reached. The purpose of this function
-// is to allow IRC bots to send multiple lines of text in response to a query, and
-// have the entire response forwarded to Telegram.
-func gatherBotResponses(responseChannel <-chan string) string {
-	var botResponse string
-	timeout := time.After(200 * time.Millisecond) // Set a timeout for reading responses
-	for {
-		select {
-		case msg := <-responseChannel:
-			botResponse += msg + " " // Concatenate each message with a space or newline
-		case <-timeout:
-			return botResponse // Return when the timeout is reached
-		}
-	}
-}
-
 // queryWorker reads from the query channel and sends a query to the IRC bot
 // with the corresponding nickname. After that, it reads the response from the
 // response channel and sends the response to Telegram. If the query was about a
@@ -131,7 +113,7 @@ func queryWorker(c <-chan botQuery) {
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
 		// Read response from the channel
-		botResponse := gatherBotResponses(responseChannel)
+		botResponse := <-responseChannel
 		// Filter IRC color codes and replace parentheses to brackets
 		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "")
 		// Split response to lines by '|' symbol
