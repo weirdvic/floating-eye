@@ -28,4 +28,4 @@ jobs:
         podman run --name=${REPO_NAME} \
                --detach --replace \
                --restart=always \
-               localhost/${REPO_NAME}:latest
+               ${REPO_NAME}:latest
