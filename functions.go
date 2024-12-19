@@ -200,7 +200,7 @@ func (a *application) init() {
 	app.Filters["TGannounce"] = regexp.MustCompile(
 		`\[\D*\d{1,2}([a-zA-Z|-]+)\D*\]`)
 	app.Filters["monsterName"] = regexp.MustCompile(
-		`^(\w+)\s?\(\S\)`)
+		`\b\w+\b(?=\s*\(\w\))`)
 
 	// Construct regexp to find messages that mention players
 	app.Filters["mentions"] = regexp.MustCompile(
