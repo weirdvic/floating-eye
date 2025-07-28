@@ -1,4 +1,4 @@
-name: Podman build
+name: Docker build
 
 on:
   push:
@@ -13,10 +13,10 @@ jobs:
     runs-on: marilith
     steps:
     - uses: actions/checkout@v4
-    - name: Build Podman image
+    - name: Build Docker image
       run: |
         echo "${BOT_CONFIG}" > config.json
-        podman build --tag ${REPO_NAME}:latest .
+        docker build --tag ${REPO_NAME}:latest .
 
   deploy:
     runs-on: self-hosted
@@ -25,7 +25,9 @@ jobs:
     - name: Update running container
       shell: bash
       run: |
-        podman run --name=${REPO_NAME} \
-               --detach --replace \
+        docker stop ${REPO_NAME} || true
+        docker rm ${REPO_NAME} || true
+        docker run --name=${REPO_NAME} \
+               --detach \
                --restart=always \
                ${REPO_NAME}:latest
