@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -93,7 +93,7 @@ func init() {
 	}
 
 	// Connect to IRC server
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", app.IRC.Server, app.IRC.Port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(app.IRC.Server, strconv.Itoa(app.IRC.Port)))
 	if err != nil {
 		log.Fatal(err)
 	}
