@@ -19,7 +19,7 @@ jobs:
         docker build --tag ${REPO_NAME}:latest .
 
   deploy:
-    runs-on: self-hosted
+    runs-on: marilith
     needs: build
     steps:
     - name: Update running container
