@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -47,12 +45,6 @@ type application struct {
 type botQuery struct {
 	BotNick string
 	Query   *tbot.Message
-}
-
-type webhook struct {
-	ChatID   string `json:"chat_id"`
-	UserName string `json:"username"`
-	Message  string `json:"message"`
 }
 
 // askBot sends a private message to specified IRC bot with the given text. It's
@@ -117,31 +109,30 @@ func queryWorker(c <-chan botQuery) {
 		// In case we're working on monster query
 		if q.BotNick == "Pinoclone" {
 			// Parsing monster's name
+			// Default image
 			var fileName string = "monsters/WARNING 0.png"
 			monsterName, err := getMonsterName(app.Filters["monsterName"], botResponse)
-			if err == nil {
-				fileName = fmt.Sprintf("monsters/%s.png", strings.ToUpper(monsterName))
-				if _, err = os.Stat(fileName); err != nil {
-					log.Println("Image not found: ", fileName)
-					fileName = "monsters/WARNING 0.png"
-				}
-				// Send image with caption
-				app.Telegram.Client.SendPhotoFile(
-					q.Query.Chat.ID,
-					fileName,
-					tbot.OptCaption(
-						strings.Join([]string{botResponse,
-							"https://nethackwiki.com/wiki/" + strings.Title(
-								strings.ToLower(
-									strings.ReplaceAll(monsterName, " ", "_")))},
-							"\n"),
-					),
-					tbot.OptReplyToMessageID(q.Query.MessageID),
-				)
-			} else {
+			if err != nil {
 				log.Println(err)
-				app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)
 			}
+			fileName = fmt.Sprintf("monsters/%s.png", strings.ToUpper(monsterName))
+			if _, err = os.Stat(fileName); err != nil {
+				log.Println("Image not found: ", fileName)
+				fileName = "monsters/WARNING 0.png"
+			}
+			// Send image with caption
+			app.Telegram.Client.SendPhotoFile(
+				q.Query.Chat.ID,
+				fileName,
+				tbot.OptCaption(
+					strings.Join([]string{botResponse,
+						"https://nethackwiki.com/wiki/" + strings.Title(
+							strings.ToLower(
+								strings.ReplaceAll(monsterName, " ", "_")))},
+						"\n"),
+				),
+				tbot.OptReplyToMessageID(q.Query.MessageID),
+			)
 		}
 	}
 }
@@ -313,51 +304,4 @@ func pickPotion() string {
 		weightedrand.NewChoice("nothing", 1),
 	)
 	return potionSeller.Pick()
-}
-
-// sendWebhook sends a webhook request to the specified endpoint with the
-// given webhook payload and authentication token. It will log any errors
-// that occur during the request, and will not retry on failure.
-func sendWebhook(endpoint, auth string, p webhook) {
-	pb, err := json.Marshal(p)
-	if err != nil {
-		log.Printf("Error marshalling payload: %v\n", err)
-		return
-	}
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(pb))
-	if err != nil {
-		log.Printf("Error creating request: %v\n", err)
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Webhook-Auth", auth)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error sending request %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Failed to send webhook: %d\n", resp.StatusCode)
-	}
-}
-
-// stat is a middleware function for a Telegram bot that intercepts updates and,
-// if the message is from a private chat, sends the message details to a specified
-// webhook URL. It forwards the update to the next handler in the chain by calling h(u).
-func stat(h tbot.UpdateHandler) tbot.UpdateHandler {
-	return func(u *tbot.Update) {
-		h(u)
-		if u.Message.Chat.Type == "private" {
-			payload := webhook{
-				u.Message.Chat.ID,
-				u.Message.From.Username,
-				u.Message.Text,
-			}
-			sendWebhook(app.WebhookURL, app.WebhookAuth, payload)
-		}
-	}
 }
