@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -70,11 +69,11 @@ func askBot(nick, text string) {
 // name and nil.
 func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 	if !r.MatchString(s) {
-		return "", errors.New("provided string does not contain a monster name")
+		return "", fmt.Errorf("provided string does not contain a monster name: %s", s)
 	}
 	match := r.FindStringSubmatch(s)
 	if len(match) < 2 {
-		return "", errors.New("provided string does not contain a monster name")
+		return "", fmt.Errorf("provided string does not contain a monster name: %s", s)
 	}
 	return match[1], nil
 }
@@ -118,10 +117,10 @@ func queryWorker(c <-chan botQuery) {
 		// In case we're working on monster query
 		if q.BotNick == "Pinoclone" {
 			// Parsing monster's name
+			var fileName string = "monsters/WARNING 0.png"
 			monsterName, err := getMonsterName(app.Filters["monsterName"], botResponse)
 			if err == nil {
-				fileName := fmt.Sprintf("monsters/%s.png", strings.ToUpper(monsterName))
-				// If monster's image is not available, set placeholder image
+				fileName = fmt.Sprintf("monsters/%s.png", strings.ToUpper(monsterName))
 				if _, err = os.Stat(fileName); err != nil {
 					log.Println("Image not found: ", fileName)
 					fileName = "monsters/WARNING 0.png"
@@ -143,9 +142,6 @@ func queryWorker(c <-chan botQuery) {
 				log.Println(err)
 				app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)
 			}
-		} else {
-			// Send just text for other queries
-			app.Telegram.Client.SendMessage(q.Query.Chat.ID, botResponse)
 		}
 	}
 }
