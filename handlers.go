@@ -37,7 +37,7 @@ func (a *application) pinobotHandler(m *tbot.Message) {
 
 // Handler for commands related to IRC Beholder bot
 func (a *application) beholderHandler(m *tbot.Message) {
-	queryChannel <- botQuery{"+Beholder", m}
+	queryChannel <- botQuery{"Beholder", m}
 }
 
 // Handler for !pom command and moon phase calculation
