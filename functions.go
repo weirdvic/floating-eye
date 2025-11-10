@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mroth/weightedrand/v2"
 	"github.com/yanzay/tbot/v2"
@@ -72,12 +74,7 @@ func getMonsterName(r *regexp.Regexp, s string) (name string, e error) {
 
 // checkBotName checks if bot name is in allowed list
 func (a *application) checkBotName(item string) bool {
-	for _, v := range a.IRC.Bots {
-		if item == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a.IRC.Bots, item)
 }
 
 // parseChatMessage parses IRC message and if it's mentions one of the players,
@@ -100,11 +97,23 @@ func (a *application) parseChatMessage(m string) {
 func queryWorker(c <-chan botQuery) {
 	for q := range c {
 		askBot(q.BotNick, q.Query.Text)
-		// Read response from the channel
-		botResponse := <-responseChannel
+		// Read response(s) from the channel
+		var botResponse string
+		// Read the first message
+		botResponse = <-responseChannel
+
+		// Keep reading messages until a 200ms timeout is reached
+	readLoop:
+		for {
+			select {
+			case msg := <-responseChannel:
+				botResponse += "\n" + msg
+			case <-time.After(200 * time.Millisecond):
+				break readLoop
+			}
+		}
 		// Filter IRC color codes and replace parentheses to brackets
 		botResponse = app.Filters["IRCcolors"].ReplaceAllString(botResponse, "")
-		// Split response to lines by '|' symbol
 		botResponse = strings.ReplaceAll(botResponse, "|", "\n")
 		// In case we're working on monster query
 		if q.BotNick == "Pinoclone" {

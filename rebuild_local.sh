@@ -1,6 +1,5 @@
 #!/bin/env bash
 
-set -eio pipefail
 CONTAINER_RUNNER="docker"
 IMAGE_NAME="floating-eye"
 
