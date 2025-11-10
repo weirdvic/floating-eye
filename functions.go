@@ -181,8 +181,8 @@ func (a *application) init() {
 	log.Println("Config successfully loaded.")
 	log.Print("Available bots are: ")
 	log.Println(a.IRC.Bots)
-	// Check if dependency commands are available in the system
-	var commands = []string{"pom", "xplanet"}
+	// Check if xplanet command is available in the system
+	var commands = []string{"xplanet"}
 	for _, v := range commands {
 		path, err := exec.LookPath(v)
 		if err != nil {

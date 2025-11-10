@@ -6,7 +6,7 @@ FROM opensuse/tumbleweed AS prod
 WORKDIR /bot
 ARG TZ="Europe/Moscow"
 ENV TZ=${TZ}
-RUN zypper -qn install -y bsd-games ca-certificates xplanet
+RUN zypper -qn install -y ca-certificates xplanet
 COPY xplanet ./xplanet
 COPY monsters ./monsters
 COPY config.json .

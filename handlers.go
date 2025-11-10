@@ -46,7 +46,7 @@ func (a *application) pomHandler(m *tbot.Message) {
 	// Save time of the request
 	updateTime := time.Now()
 	// If pom.jpg wasn't updated in an hour do an update
-	if PoM.UpdatedAt.Hour()-updateTime.Hour() != 0 {
+	if time.Since(PoM.UpdatedAt) > time.Hour {
 		err := PoM.updateImage()
 		/* in case there was an error running xplanets send this error as a message
 		   otherwise update pom.Text and save the update timestamp */

@@ -16,6 +16,17 @@ type pomRequest struct {
 // PoM variable is used to store phase of moon data
 var PoM pomRequest
 
+var phaseNames = map[int]string{
+	0: "New Moon",
+	1: "Waxing Crescent",
+	2: "First Quarter",
+	3: "Waxing Gibbous",
+	4: "Full Moon",
+	5: "Waning Gibbous",
+	6: "Last Quarter",
+	7: "Waning Crescent",
+}
+
 // getPhase is a rewrite of the same function from https://alt.org/nethack/moon/pom.pl
 // which in turn is a rewrite of NetHack's phase_of_the_moon function
 func getPhase(diy, year int) int {
@@ -53,19 +64,14 @@ func (p *pomRequest) updateText() {
 		inPhase, nextInPhase bool
 		days                 int
 	)
-	// first part of the message is the result of 'pom' command from bsdgames package
-	pomOutput, err := exec.Command("pom").Output()
-	if err != nil {
-		p.Text = err.Error()
-		return
-	}
-	// appending first part of the message
-	p.Text = string(pomOutput)
 
 	localtime := time.Now()
 	hour := localtime.Hour()
 	year := localtime.Year()
 	diy := localtime.YearDay()
+
+	// Generate moon phase description string
+	p.Text = fmt.Sprintf("The Moon is %s.\n", phaseNames[getPhase(diy, year)])
 
 	curPhase := getPhase(diy, year)
 
