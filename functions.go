@@ -47,14 +47,16 @@ type application struct {
 type botQuery struct {
 	BotNick string
 	Query   *tbot.Message
+	ReplyTo chan string
 }
 
 // askBot sends a private message to specified IRC bot with the given text. It's
 // used to query the bot about NetHack monsters and other game-related info.
-func askBot(nick, text string) {
+func askBot(nick, text string, replyChan chan string) {
 	app.IRC.Client.WriteMessage(&irc.Message{
 		Command: "PRIVMSG",
 		Params:  []string{nick, text}})
+	responseMap[nick] = replyChan
 }
 
 // getMonsterName extracts a monster name from a given string using a regular
@@ -96,19 +98,20 @@ func (a *application) parseChatMessage(m string) {
 // monster, it also sends the monster's image if it is available.
 func queryWorker(c <-chan botQuery) {
 	for q := range c {
-		askBot(q.BotNick, q.Query.Text)
+		askBot(q.BotNick, q.Query.Text, q.ReplyTo)
 		// Read response(s) from the channel
 		var botResponse string
 		// Read the first message
-		botResponse = <-responseChannel
+		botResponse = <-q.ReplyTo
 
 		// Keep reading messages until a 200ms timeout is reached
 	readLoop:
 		for {
 			select {
-			case msg := <-responseChannel:
+			case msg := <-q.ReplyTo:
 				botResponse += "\n" + msg
 			case <-time.After(200 * time.Millisecond):
+				close(q.ReplyTo)
 				break readLoop
 			}
 		}

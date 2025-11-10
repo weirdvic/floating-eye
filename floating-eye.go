@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	app             application
-	workers         sync.WaitGroup
-	queryChannel    = make(chan botQuery) //
-	responseChannel = make(chan string)
+	app          application
+	workers      sync.WaitGroup
+	queryChannel = make(chan botQuery)
+	responseMap  = make(map[string]chan string)
 )
 
 func init() {
@@ -80,8 +80,11 @@ func init() {
 			case m.Command == "PING":
 				c.Write("PONG")
 			// Write private messages from trusted senders to the responseChannel to be picked up by queryWorker
-			case m.Command == "PRIVMSG" && app.checkBotName(m.Name) && !c.FromChannel(m):
-				responseChannel <- m.Trailing()
+			case m.Command == "PRIVMSG" && !c.FromChannel(m):
+				if replyChan, ok := responseMap[m.Name]; ok {
+					replyChan <- m.Trailing()
+					delete(responseMap, m.Name) // Clean up the map
+				}
 			case m.Command == "PRIVMSG" && c.FromChannel(m) && (m.Name == "Beholder" || m.Name == "Croesus"):
 				app.parseChatMessage(m.Trailing())
 			default:

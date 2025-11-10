@@ -32,12 +32,14 @@ func (a *application) announceHandler(m *tbot.Message) {
 
 // Handler for commands related to IRC Pinobot
 func (a *application) pinobotHandler(m *tbot.Message) {
-	queryChannel <- botQuery{"Pinoclone", m}
+	replyChan := make(chan string)
+	queryChannel <- botQuery{"Pinoclone", m, replyChan}
 }
 
 // Handler for commands related to IRC Beholder bot
 func (a *application) beholderHandler(m *tbot.Message) {
-	queryChannel <- botQuery{"Beholder", m}
+	replyChan := make(chan string)
+	queryChannel <- botQuery{"Beholder", m, replyChan}
 }
 
 // Handler for !pom command and moon phase calculation
