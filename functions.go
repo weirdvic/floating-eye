@@ -142,6 +142,12 @@ func queryWorker(c <-chan botQuery) {
 				),
 				tbot.OptReplyToMessageID(q.Query.MessageID),
 			)
+		} else {
+			// Otherwise just send the response back
+			app.Telegram.Client.SendMessage(
+				q.Query.Chat.ID,
+				botResponse,
+				tbot.OptReplyToMessageID(q.Query.MessageID))
 		}
 	}
 }
